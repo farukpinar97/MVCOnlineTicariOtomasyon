@@ -1,0 +1,24 @@
+﻿@model MVCOnlineTicariOtomasyon.Models.Entities.SalesTransaction
+
+@{
+    ViewBag.PageTitle = "Yeni satış";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+@using (Html.BeginForm("SalesAdd", "Sales", FormMethod.Post, new { @class = "card form-card form-card--wide" }))
+{
+    @Html.AntiForgeryToken()
+
+    <div class="card-body">
+        @Html.Partial("_SalesForm")
+    </div>
+
+    <div class="card-footer">
+        <button type="submit" class="btn btn-primary">Satışı kaydet</button>
+        <a class="btn btn-light" href="@Url.Action("Index")">Vazgeç</a>
+    </div>
+}
+
+@section scripts {
+    <script src="~/Content/admin/sales-form.js"></script>
+}

@@ -1,0 +1,33 @@
+﻿@* Mesaj sayfalarının solundaki sütun *@
+@{
+    string folder = ViewBag.Folder as string;
+    int inboxCount = ViewBag.InboxCount ?? 0;
+    int sentCount = ViewBag.SentCount ?? 0;
+    int unreadCount = ViewBag.UnreadCount ?? 0;
+}
+
+<aside class="mail-side">
+    <a class="btn btn-primary btn-block mail-side__new @(folder == "new" ? "active" : null)" href="@Url.Action("NewMessage")">
+        <i class="fas fa-pen mr-2" aria-hidden="true"></i>Yeni mesaj
+    </a>
+
+    <nav class="mail-folders" aria-label="Klasörler">
+        <a class="mail-folder @(folder == "inbox" ? "is-active" : null)" href="@Url.Action("Messages")" aria-current="@(folder == "inbox" ? "page" : null)">
+            <i class="fas fa-inbox fa-fw" aria-hidden="true"></i>
+            <span class="mail-folder__name">Gelen kutusu</span>
+            @if (unreadCount > 0)
+            {
+                <span class="mail-folder__badge" title="@unreadCount okunmamış">@unreadCount</span>
+            }
+            else
+            {
+                <span class="mail-folder__count">@inboxCount</span>
+            }
+        </a>
+        <a class="mail-folder @(folder == "sent" ? "is-active" : null)" href="@Url.Action("Messages", new { folder = "sent" })" aria-current="@(folder == "sent" ? "page" : null)">
+            <i class="fas fa-paper-plane fa-fw" aria-hidden="true"></i>
+            <span class="mail-folder__name">Gönderilenler</span>
+            <span class="mail-folder__count">@sentCount</span>
+        </a>
+    </nav>
+</aside>

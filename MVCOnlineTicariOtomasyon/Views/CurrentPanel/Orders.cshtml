@@ -1,0 +1,57 @@
+﻿@using MVCOnlineTicariOtomasyon.Models.Entities
+@model List<SalesTransaction>
+
+@{
+    Layout = "~/Views/Shared/_CurrentLayout.cshtml";
+
+    var tr = new System.Globalization.CultureInfo("tr-TR");
+    var totalQuantity = Model.Sum(x => x.SalesTransactionQuantity);
+    var totalPrice = Model.Sum(x => x.SalesTransactionTotalPrice);
+
+    // Siparişler ay ay gruplanır
+    var months = Model.GroupBy(x => new DateTime(x.SalesTransactionDate.Year, x.SalesTransactionDate.Month, 1)).ToList();
+}
+
+@if (Model.Count == 0)
+{
+    <div class="empty-state">
+        <h2>Henüz siparişin yok</h2>
+        <p>Sana yapılan satışlar burada ay ay listelenir.</p>
+    </div>
+}
+else
+{
+    <dl class="summary">
+        <div class="summary__item">
+            <dt>Sipariş</dt>
+            <dd>@Model.Count.ToString("N0", tr)</dd>
+        </div>
+        <div class="summary__item">
+            <dt>Ürün adedi</dt>
+            <dd>@totalQuantity.ToString("N0", tr)</dd>
+        </div>
+        <div class="summary__item">
+            <dt>Toplam tutar</dt>
+            <dd>@totalPrice.ToString("C2", tr)</dd>
+        </div>
+    </dl>
+
+    foreach (var month in months)
+    {
+        var monthTotal = month.Sum(x => x.SalesTransactionTotalPrice);
+        var monthCount = month.Count();
+
+        <section class="order-group">
+            <header class="order-group__head">
+                <h2 class="order-group__title">@month.Key.ToString("MMMM yyyy", tr)</h2>
+                <span class="order-group__sum">@monthCount sipariş, @monthTotal.ToString("C2", tr)</span>
+            </header>
+            <ul class="order-list">
+                @foreach (var order in month)
+                {
+                    @Html.Partial("_OrderRow", order)
+                }
+            </ul>
+        </section>
+    }
+}

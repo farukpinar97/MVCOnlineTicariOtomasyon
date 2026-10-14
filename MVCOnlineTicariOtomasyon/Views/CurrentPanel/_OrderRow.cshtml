@@ -1,0 +1,23 @@
+﻿@model MVCOnlineTicariOtomasyon.Models.Entities.SalesTransaction
+
+@* Bir siparişin satırı *@
+@{
+    var tr = new System.Globalization.CultureInfo("tr-TR");
+}
+
+<li class="order-row">
+    @* Görsel yoksa ya da yüklenemezse ikon görünür *@
+    <span class="thumb">
+        <i class="fas fa-box" aria-hidden="true"></i>
+        @if (!String.IsNullOrWhiteSpace(Model.Product.ProductImage))
+        {
+            <img src="@Model.Product.ProductImage" alt="" loading="lazy" />
+        }
+    </span>
+    <div class="order-row__main">
+        <div class="order-row__name">@Model.Product.ProductName</div>
+        <div class="order-row__meta">Sipariş no @Model.SalesTransactionId, @Model.SalesTransactionDate.ToString("d MMMM yyyy", tr)</div>
+    </div>
+    <div class="order-row__qty">@Model.SalesTransactionQuantity &times; @Model.SalesTransactionUnitPrice.ToString("C2", tr)</div>
+    <div class="order-row__total">@Model.SalesTransactionTotalPrice.ToString("C2", tr)</div>
+</li>

@@ -1,0 +1,21 @@
+﻿@model MVCOnlineTicariOtomasyon.Models.Entities.Personnel
+
+@{
+    ViewBag.PageTitle = "Yeni personel";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+@* enctype="multipart/form-data" *@
+@using (Html.BeginForm("PersonnelAdd", "Personnel", FormMethod.Post, new { @class = "card form-card form-card--wide", enctype = "multipart/form-data" }))
+{
+    @Html.AntiForgeryToken()
+
+    <div class="card-body">
+        @Html.Partial("_PersonnelForm")
+    </div>
+
+    <div class="card-footer">
+        <button type="submit" class="btn btn-primary">Personeli ekle</button>
+        <a class="btn btn-light" href="@Url.Action("Index")">Vazgeç</a>
+    </div>
+}

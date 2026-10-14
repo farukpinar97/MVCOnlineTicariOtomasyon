@@ -1,0 +1,143 @@
+﻿@using MVCOnlineTicariOtomasyon.Models.Entities
+@model Invoice
+
+@{
+    ViewBag.PageTitle = "Fatura";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+
+    var tr = new System.Globalization.CultureInfo("tr-TR");
+
+    // Kalemler eklenme sırasıyla
+    var items = (Model.InvoiceItems ?? new List<InvoiceItem>()).OrderBy(x => x.InvoiceItemId).ToList();
+    decimal total = items.Sum(x => x.InvoiceItemTotalPrice);
+    int row = 0;
+}
+
+@* Yazdırırken sadece aşağıdaki fatura kağıda çıkar *@
+<div class="page-bar">
+    <p class="page-bar__info">Fatura no @Model.InvoiceSerialNo @Model.InvoiceOrderNo</p>
+    <div class="page-bar__actions">
+        <a class="btn btn-light" href="@Url.Action("Index")"><i class="fas fa-arrow-left mr-2"></i>Faturalara dön</a>
+        <a class="btn btn-light" href="@Url.Action("InvoiceGet", new { id = Model.InvoiceId })"><i class="fas fa-pen mr-2"></i>Güncelle</a>
+        @if (items.Count > 0)
+        {
+            <button type="button" class="btn btn-light" onclick="window.print()"><i class="fas fa-print mr-2"></i>Yazdır</button>
+        }
+        <a class="btn btn-primary" href="@Url.Action("InvoiceItemAdd", new { id = Model.InvoiceId })" data-toggle="modal" data-target="#itemModal"><i class="fas fa-plus mr-2"></i>Kalem ekle</a>
+    </div>
+</div>
+
+<article class="receipt">
+    <header class="receipt__head">
+        <div>
+            <div class="receipt__brand">Ticari Otomasyon</div>
+            <h2 class="receipt__title">Fatura</h2>
+        </div>
+        <dl class="receipt__meta">
+            <div>
+                <dt>Fatura no</dt>
+                <dd>@Model.InvoiceSerialNo @Model.InvoiceOrderNo</dd>
+            </div>
+            <div>
+                <dt>Tarih</dt>
+                <dd>@Model.InvoiceDate.ToString("dd.MM.yyyy", tr)</dd>
+            </div>
+            @if (!String.IsNullOrWhiteSpace(Model.InvoiceTime))
+            {
+                <div>
+                    <dt>Saat</dt>
+                    <dd>@Model.InvoiceTime</dd>
+                </div>
+            }
+        </dl>
+    </header>
+
+    <div class="receipt__parties">
+        <div>
+            <h3>Teslim alan</h3>
+            <div class="receipt__name">@Model.Receiver</div>
+        </div>
+        <div>
+            <h3>Teslim eden</h3>
+            <div class="receipt__name">@Model.Deliverer</div>
+        </div>
+        @if (!String.IsNullOrWhiteSpace(Model.TaxOffice))
+        {
+            <div>
+                <h3>Vergi dairesi</h3>
+                <div>@Model.TaxOffice</div>
+            </div>
+        }
+    </div>
+
+    @if (items.Count == 0)
+    {
+        <div class="empty-state">
+            <h2>Bu faturada kalem yok</h2>
+            <p>Faturaya girecek ürün ya da hizmetleri kalem olarak ekle. Toplam kendiliğinden hesaplanır.</p>
+            <a class="btn btn-primary" href="@Url.Action("InvoiceItemAdd", new { id = Model.InvoiceId })" data-toggle="modal" data-target="#itemModal"><i class="fas fa-plus mr-2"></i>Kalem ekle</a>
+        </div>
+    }
+    else
+    {
+        @* data-admin="off" *@
+        <div class="table-responsive mb-0">
+        <table class="table" data-admin="off">
+            <thead>
+                <tr>
+                    <th class="cell-fit">Sıra</th>
+                    <th>Açıklama</th>
+                    <th class="cell-fit cell-num">Miktar</th>
+                    <th class="cell-fit cell-num">Birim fiyat</th>
+                    <th class="cell-fit cell-num">Tutar</th>
+                    <th class="cell-actions"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in items)
+                {
+                    row++;
+
+                    <tr>
+                        <td>@row</td>
+                        <td>@item.InvoiceItemDescription</td>
+                        <td class="cell-num">@item.InvoiceItemQuantity</td>
+                        <td class="cell-fit cell-num">@item.InvoiceItemUnitPrice.ToString("C2", tr)</td>
+                        <td class="cell-fit cell-num">@item.InvoiceItemTotalPrice.ToString("C2", tr)</td>
+                        <td class="cell-actions">
+                            <button type="button" class="btn btn-outline-danger"
+                                    data-toggle="modal" data-target="#deleteModal"
+                                    data-delete-url="@Url.Action("InvoiceItemDelete", new { id = item.InvoiceItemId })"
+                                    data-delete-name="@item.InvoiceItemDescription"
+                                    data-delete-text="Kalem faturadan çıkar ve fatura toplamı yeniden hesaplanır. Bu işlem geri alınamaz.">
+                                <i class="fas fa-trash-alt mr-1"></i>Sil
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr>
+                    <th colspan="4">Toplam</th>
+                    <td class="cell-fit cell-num">@total.ToString("C2", tr)</td>
+                    <td class="cell-actions"></td>
+                </tr>
+            </tfoot>
+        </table>
+        </div>
+    }
+</article>
+
+@* "Kalem ekle" penceresi *@
+<div class="modal fade" id="itemModal" tabindex="-1" role="dialog" aria-labelledby="itemModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-form-md" role="document">
+        <div class="modal-content" data-modal-slot data-reset data-url="@Url.Action("InvoiceItemAdd", new { id = Model.InvoiceId })">
+            @Html.Action("InvoiceItemAdd", new { id = Model.InvoiceId })
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script src="@Url.Content("~/Content/admin/modal-form.js")"></script>
+    <script src="@Url.Content("~/Content/admin/invoice-item.js")"></script>
+}

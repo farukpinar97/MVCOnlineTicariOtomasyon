@@ -1,0 +1,163 @@
+﻿@using MVCOnlineTicariOtomasyon.Models.Entities
+@using PagedList
+@model IPagedList<Product>
+
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+
+    var tr = new System.Globalization.CultureInfo("tr-TR");
+
+    string q = ViewBag.Query;
+
+    // Stoku bu sayıya eşit ya da altında olan ürün "Azaldı" diye işaretlenir
+    int lowStock = ViewBag.LowStock;
+
+    // Özet bandındaki toplamlar
+    int activeCount = ViewBag.ActiveCount;
+    int totalStock = ViewBag.TotalStock;
+    decimal purchaseValue = ViewBag.PurchaseValue;
+    decimal saleValue = ViewBag.SaleValue;
+    int lowCount = ViewBag.LowCount;
+}
+
+<div class="page-bar">
+    <div class="page-bar__lead">
+        @if (activeCount > 0)
+        {
+            @* Arama sunucuda yapılır *@
+            <form class="list-search" method="get" action="@Url.Action("Index")" role="search">
+                <i class="fas fa-search list-search__icon" aria-hidden="true"></i>
+                <input class="form-control" type="search" name="q" value="@q" placeholder="Ürün, marka ya da kategori ara" aria-label="Ürün ara" maxlength="50" autocomplete="off" />
+            </form>
+        }
+        <p class="page-bar__info">
+            @if (q == null)
+            {
+                @:@activeCount aktif ürün
+            }
+            else
+            {
+                @:“@q” için @Model.TotalItemCount sonuç <a class="page-bar__clear" href="@Url.Action("Index")">Aramayı temizle</a>
+            }
+        </p>
+    </div>
+    <div class="page-bar__actions">
+        <a class="btn btn-light" href="@Url.Action("ProductList")"><i class="fas fa-file-export mr-2"></i>Tüm ürünler ve dışa aktarma</a>
+        <a class="btn btn-primary" href="@Url.Action("ProductAdd")"><i class="fas fa-plus mr-2"></i>Ürün ekle</a>
+    </div>
+</div>
+
+@if (activeCount == 0)
+{
+    <div class="empty-state">
+        <h2>Aktif ürün yok</h2>
+        <p>İlk ürünü ekle ya da silinmiş ürünleri Tüm ürünler sayfasından geri al.</p>
+        <a class="btn btn-primary" href="@Url.Action("ProductAdd")"><i class="fas fa-plus mr-2"></i>Ürün ekle</a>
+    </div>
+}
+else
+{
+    <dl class="summary">
+        <div class="summary__item">
+            <dt>Stoktaki toplam adet</dt>
+            <dd>@totalStock.ToString("N0", tr)</dd>
+        </div>
+        <div class="summary__item">
+            <dt>Stok değeri, alış fiyatıyla</dt>
+            <dd>@purchaseValue.ToString("C2", tr)</dd>
+        </div>
+        <div class="summary__item">
+            <dt>Stok değeri, satış fiyatıyla</dt>
+            <dd>@saleValue.ToString("C2", tr)</dd>
+        </div>
+        <div class="summary__item @(lowCount > 0 ? "is-warning" : null)">
+            <dt>Stoku @lowStock ve altında olan</dt>
+            <dd>@lowCount ürün</dd>
+        </div>
+    </dl>
+
+    if (Model.TotalItemCount == 0)
+    {
+        <div class="empty-state">
+            <h2>Eşleşen ürün yok</h2>
+            <p>“@q” ürün adında, markada ya da kategori adında geçmiyor.</p>
+            <a class="btn btn-light" href="@Url.Action("Index")">Bütün ürünleri göster</a>
+        </div>
+    }
+    else
+    {
+        @* data-search="off" *@
+        <table class="table table-bordered" data-search="off">
+            <thead>
+                <tr>
+                    <th class="cell-fit">ID</th>
+                    <th>Ürün</th>
+                    <th>Kategori</th>
+                    <th class="cell-fit cell-num">Stok</th>
+                    <th class="cell-fit cell-num">Alış fiyatı</th>
+                    <th class="cell-fit cell-num">Satış fiyatı</th>
+                    <th class="cell-actions">İşlemler</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.ProductId</td>
+                        <td>
+                            <div class="product-cell">
+                                @* Görsel yoksa ya da yüklenemezse ikon görünür *@
+                                <span class="thumb">
+                                    <i class="fas fa-image"></i>
+                                    @if (!string.IsNullOrWhiteSpace(item.ProductImage))
+                                    {
+                                        <img src="@item.ProductImage" alt="" loading="lazy" />
+                                    }
+                                </span>
+                                <div>
+                                    <div class="product-cell__name"><a href="@Url.Action("Index", "ProductDetail", new { id = item.ProductId })">@item.ProductName</a></div>
+                                    <div class="product-cell__brand">@item.Brand</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>@item.Category.CategoryName</td>
+                        <td class="cell-fit cell-num">
+                            @if (item.Stock == 0)
+                            {
+                                <span class="badge badge-danger mr-1">Tükendi</span>
+                            }
+                            else if (item.Stock <= lowStock)
+                            {
+                                <span class="badge badge-warning mr-1">Azaldı</span>
+                            }
+                            @item.Stock
+                        </td>
+                        <td class="cell-fit cell-num">@item.PurchasePrice.ToString("C2", tr)</td>
+                        <td class="cell-fit cell-num">@item.SalePrice.ToString("C2", tr)</td>
+                        <td class="cell-actions">
+                            @* Satış formunu bu ürün seçili olarak açar *@
+                            @if (item.Stock > 0)
+                            {
+                                <a class="btn btn-light" href="@Url.Action("SalesAdd", "Sales", new { id = item.ProductId })"><i class="fas fa-cash-register mr-1"></i>Satış yap</a>
+                            }
+                            else
+                            {
+                                <button type="button" class="btn btn-light" disabled><i class="fas fa-cash-register mr-1"></i>Satış yap</button>
+                            }
+                            <a class="btn btn-light" href="@Url.Action("ProductGet", new { id = item.ProductId })"><i class="fas fa-pen mr-1"></i>Güncelle</a>
+                            <button type="button" class="btn btn-outline-danger"
+                                    data-toggle="modal" data-target="#deleteModal"
+                                    data-delete-url="@Url.Action("ProductDelete", new { id = item.ProductId, page = Model.PageNumber, q })"
+                                    data-delete-name="@item.ProductName"
+                                    data-delete-text="Ürün bu listeden kalkar, geçmiş satış kayıtları korunur. Geri almak için Tüm ürünler sayfasından ürünü açıp Aktif yap.">
+                                <i class="fas fa-trash-alt mr-1"></i>Sil
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        @Html.Partial("_Pager", Model)
+    }
+}

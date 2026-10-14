@@ -1,0 +1,133 @@
+﻿@using MVCOnlineTicariOtomasyon.Models.Entities
+@model Current
+
+@{
+    Layout = "~/Views/Shared/_CurrentLayout.cshtml";
+
+    var tr = new System.Globalization.CultureInfo("tr-TR");
+
+    int orderCount = ViewBag.OrderCount;
+    decimal totalSpent = ViewBag.TotalSpent;
+    var recentOrders = (List<SalesTransaction>)ViewBag.RecentOrders;
+}
+
+<dl class="summary">
+    <div class="summary__item">
+        <dt>Sipariş</dt>
+        <dd>@orderCount.ToString("N0", tr)</dd>
+    </div>
+    <div class="summary__item">
+        <dt>Toplam tutar</dt>
+        <dd>@totalSpent.ToString("C2", tr)</dd>
+    </div>
+    <div class="summary__item">
+        <dt>Cari no</dt>
+        <dd>@Model.CurrentId</dd>
+    </div>
+</dl>
+
+<div class="cp-grid">
+
+    @* Bilgilerim *@
+    @using (Html.BeginForm("ProfileUpdate", "CurrentPanel", FormMethod.Post, new { @class = "card cp-card" }))
+    {
+        @Html.AntiForgeryToken()
+
+        <div class="card-header">
+            <h2 class="cp-card__title">Bilgilerim</h2>
+            <span class="cp-card__desc">Faturalarında ve siparişlerinde görünen bilgiler.</span>
+        </div>
+
+        <div class="card-body">
+            <div class="form-row">
+                <div class="form-group col-sm-6">
+                    @Html.LabelFor(x => x.CurrentName)
+                    @Html.TextBoxFor(x => x.CurrentName, new { @class = "form-control", maxlength = 30, required = "required", autocomplete = "given-name" })
+                    @Html.ValidationMessageFor(x => x.CurrentName)
+                </div>
+                <div class="form-group col-sm-6">
+                    @Html.LabelFor(x => x.CurrentSurname)
+                    @Html.TextBoxFor(x => x.CurrentSurname, new { @class = "form-control", maxlength = 30, required = "required", autocomplete = "family-name" })
+                    @Html.ValidationMessageFor(x => x.CurrentSurname)
+                </div>
+            </div>
+            <div class="form-group">
+                @Html.LabelFor(x => x.CurrentCity)
+                @Html.TextBoxFor(x => x.CurrentCity, new { @class = "form-control", maxlength = 13, autocomplete = "address-level2" })
+                @Html.ValidationMessageFor(x => x.CurrentCity)
+            </div>
+            <div class="form-group mb-0">
+                @Html.LabelFor(x => x.CurrentMail)
+                @* Sadece gösterilir, forma dahil değildir *@
+                <input class="form-control" id="CurrentMail" type="text" value="@Model.CurrentMail" disabled />
+                <small class="form-text text-muted">Giriş adresin olduğu için buradan değiştirilemez.</small>
+            </div>
+        </div>
+
+        <div class="card-footer">
+            <button type="submit" class="btn btn-primary">Bilgilerimi kaydet</button>
+        </div>
+    }
+
+    @* Şifremi değiştir *@
+    @using (Html.BeginForm("PasswordUpdate", "CurrentPanel", FormMethod.Post, new { @class = "card cp-card" }))
+    {
+        @Html.AntiForgeryToken()
+
+        <div class="card-header">
+            <h2 class="cp-card__title">Şifremi değiştir</h2>
+            <span class="cp-card__desc">Önce şu anki şifreni yaz.</span>
+        </div>
+
+        <div class="card-body">
+            <div class="form-group">
+                <label for="OldPassword">Şu anki şifre</label>
+                <input class="form-control @(ViewData.ModelState.IsValidField("OldPassword") ? null : "input-validation-error")" id="OldPassword" name="OldPassword" type="password" maxlength="20" required autocomplete="current-password" />
+                @Html.ValidationMessage("OldPassword")
+            </div>
+            <div class="form-group">
+                <label for="NewPassword">Yeni şifre</label>
+                <input class="form-control @(ViewData.ModelState.IsValidField("NewPassword") ? null : "input-validation-error")" id="NewPassword" name="NewPassword" type="password" minlength="6" maxlength="20" required autocomplete="new-password" />
+                @Html.ValidationMessage("NewPassword")
+                <small class="form-text text-muted">6 ile 20 karakter arası.</small>
+            </div>
+            <div class="form-group mb-0">
+                <label for="NewPasswordRepeat">Yeni şifre tekrar</label>
+                <input class="form-control @(ViewData.ModelState.IsValidField("NewPasswordRepeat") ? null : "input-validation-error")" id="NewPasswordRepeat" name="NewPasswordRepeat" type="password" maxlength="20" required autocomplete="new-password" />
+                @Html.ValidationMessage("NewPasswordRepeat")
+            </div>
+        </div>
+
+        <div class="card-footer">
+            <button type="submit" class="btn btn-primary">Şifremi değiştir</button>
+        </div>
+    }
+
+</div>
+
+<section class="card cp-card">
+    <div class="card-header cp-card__head">
+        <div>
+            <h2 class="cp-card__title">Son siparişlerin</h2>
+            <span class="cp-card__desc">En yeni üç sipariş.</span>
+        </div>
+        @if (orderCount > 0)
+        {
+            <a href="@Url.Action("Orders")">Tüm siparişlerim</a>
+        }
+    </div>
+
+    @if (recentOrders.Count == 0)
+    {
+        <p class="cp-card__empty">Henüz siparişin yok. Sana yapılan satışlar burada görünecek.</p>
+    }
+    else
+    {
+        <ul class="order-list">
+            @foreach (var order in recentOrders)
+            {
+                @Html.Partial("_OrderRow", order)
+            }
+        </ul>
+    }
+</section>

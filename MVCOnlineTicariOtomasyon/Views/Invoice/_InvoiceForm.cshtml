@@ -1,0 +1,49 @@
+﻿@model MVCOnlineTicariOtomasyon.Models.Entities.Invoice
+
+@* Fatura formunun alanları *@
+
+<div class="form-row">
+    <div class="form-group col-md-3">
+        @Html.LabelFor(x => x.InvoiceSerialNo)
+        @Html.TextBoxFor(x => x.InvoiceSerialNo, new { @class = "form-control", maxlength = 1, required = "required", autofocus = "autofocus", autocomplete = "off" })
+        @Html.ValidationMessageFor(x => x.InvoiceSerialNo)
+        <small class="form-text text-muted">Tek harf. Örnek: A</small>
+    </div>
+    <div class="form-group col-md-3">
+        @Html.LabelFor(x => x.InvoiceOrderNo)
+        @Html.TextBoxFor(x => x.InvoiceOrderNo, new { @class = "form-control", maxlength = 6, required = "required", autocomplete = "off" })
+        @Html.ValidationMessageFor(x => x.InvoiceOrderNo)
+        <small class="form-text text-muted">En fazla 6 karakter. Örnek: 000123</small>
+    </div>
+    <div class="form-group col-md-3">
+        @Html.LabelFor(x => x.InvoiceDate)
+        @Html.TextBoxFor(x => x.InvoiceDate, "{0:yyyy-MM-dd}", new { @class = "form-control", type = "date", required = "required" })
+        @Html.ValidationMessageFor(x => x.InvoiceDate)
+    </div>
+    <div class="form-group col-md-3">
+        @Html.LabelFor(x => x.InvoiceTime)
+        @Html.TextBoxFor(x => x.InvoiceTime, new { @class = "form-control", type = "time" })
+        @Html.ValidationMessageFor(x => x.InvoiceTime)
+    </div>
+</div>
+
+<div class="form-row">
+    <div class="form-group col-md-6">
+        @Html.LabelFor(x => x.Deliverer)
+        @Html.TextBoxFor(x => x.Deliverer, new { @class = "form-control", maxlength = 30, autocomplete = "off" })
+        @Html.ValidationMessageFor(x => x.Deliverer)
+    </div>
+    <div class="form-group col-md-6">
+        @Html.LabelFor(x => x.Receiver)
+        @Html.TextBoxFor(x => x.Receiver, new { @class = "form-control", maxlength = 30, autocomplete = "off" })
+        @Html.ValidationMessageFor(x => x.Receiver)
+    </div>
+</div>
+
+<div class="form-row">
+    <div class="form-group col-md-6 mb-0">
+        @Html.LabelFor(x => x.TaxOffice)
+        @Html.TextBoxFor(x => x.TaxOffice, new { @class = "form-control", maxlength = 60, autocomplete = "off" })
+        @Html.ValidationMessageFor(x => x.TaxOffice)
+    </div>
+</div>

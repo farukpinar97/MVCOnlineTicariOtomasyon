@@ -1,0 +1,20 @@
+﻿@model MVCOnlineTicariOtomasyon.Models.Entities.Product
+
+@{
+    ViewBag.PageTitle = "Yeni ürün";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+@using (Html.BeginForm("ProductAdd", "Product", FormMethod.Post, new { @class = "card form-card form-card--wide" }))
+{
+    @Html.AntiForgeryToken()
+
+    <div class="card-body">
+        @Html.Partial("_ProductForm")
+    </div>
+
+    <div class="card-footer">
+        <button type="submit" class="btn btn-primary">Ürünü ekle</button>
+        <a class="btn btn-light" href="@Url.Action("Index")">Vazgeç</a>
+    </div>
+}

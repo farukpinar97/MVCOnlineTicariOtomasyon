@@ -1,0 +1,64 @@
+﻿@using MVCOnlineTicariOtomasyon.Models.Entities
+@model Message
+
+@{
+    Layout = "~/Views/Shared/_CurrentLayout.cshtml";
+
+    var tr = new System.Globalization.CultureInfo("tr-TR");
+    bool incoming = ViewBag.Incoming;
+
+    Func<Current, string> nameOf = x => x == null ? "Silinmiş cari" : x.CurrentName + " " + x.CurrentSurname;
+    Func<Current, string> initialsOf = x => x == null ? "?" :
+        ((String.IsNullOrEmpty(x.CurrentName) ? "" : x.CurrentName.Substring(0, 1)) +
+         (String.IsNullOrEmpty(x.CurrentSurname) ? "" : x.CurrentSurname.Substring(0, 1))).ToUpper(tr);
+
+    // Gelen mesajda büyük avatar göndereninki, gönderilende alıcınınki
+    var other = incoming ? Model.Sender : Model.Receiver;
+}
+
+<div class="mail">
+    @Html.Partial("_MailFolders")
+
+    <article class="card mail-read">
+        <header class="mail-read__head">
+            <a class="mail-read__back" href="@Url.Action("Messages", new { folder = incoming ? null : "sent" })">
+                <i class="fas fa-arrow-left mr-2" aria-hidden="true"></i>@(incoming ? "Gelen kutusu" : "Gönderilenler")
+            </a>
+            <h2 class="mail-read__subject">@Model.Subject</h2>
+
+            <div class="mail-read__people">
+                <span class="mail-row__avatar mail-row__avatar--lg" aria-hidden="true">@initialsOf(other)</span>
+                <div class="mail-read__who">
+                    <div>
+                        <span class="mail-read__label">@(incoming ? "Kimden" : "Kime")</span>
+                        <strong>@nameOf(other)</strong>
+                        @if (other != null && !String.IsNullOrEmpty(other.CurrentMail))
+                        {
+                            <span class="mail-read__mail">@other.CurrentMail</span>
+                        }
+                    </div>
+                    <time class="mail-read__date" datetime="@Model.Date.ToString("s")">@Model.Date.ToString("d MMMM yyyy dddd, HH:mm", tr)</time>
+                </div>
+                @if (!incoming)
+                {
+                    <span class="mail-read__status @(Model.IsRead ? "is-read" : null)">
+                        <i class="fas @(Model.IsRead ? "fa-check-double" : "fa-check") mr-1" aria-hidden="true"></i>@(Model.IsRead ? "Okundu" : "Henüz okunmadı")
+                    </span>
+                }
+            </div>
+        </header>
+
+        @* Satır sonları korunur *@
+        <div class="mail-read__body">@Model.Content</div>
+
+        <footer class="mail-read__foot">
+            @if (other != null)
+            {
+                <a class="btn btn-primary" href="@Url.Action("NewMessage", new { reply = Model.MessageId })">
+                    <i class="fas fa-reply mr-2" aria-hidden="true"></i>@(incoming ? "Yanıtla" : "Yeni mesaj yaz")
+                </a>
+            }
+            <a class="btn btn-light" href="@Url.Action("Messages", new { folder = incoming ? null : "sent" })">Geri dön</a>
+        </footer>
+    </article>
+</div>

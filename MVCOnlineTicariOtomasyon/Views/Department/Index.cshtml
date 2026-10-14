@@ -1,0 +1,73 @@
+﻿@using MVCOnlineTicariOtomasyon.Models.Entities
+@model List<Department>
+
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+
+    // SweetAlert örneği
+    ViewBag.FlashAsToast = true;
+}
+
+@if (Model.Count == 0)
+{
+    <div class="empty-state">
+        <h2>Henüz departman yok</h2>
+        <p>Personelleri gruplamak için ilk departmanı ekle.</p>
+        <a class="btn btn-primary" href="@Url.Action("DepartmentAdd")"><i class="fas fa-plus mr-2"></i>Departman ekle</a>
+    </div>
+}
+else
+{
+    <div class="page-bar">
+        <p class="page-bar__info">@Model.Count departman</p>
+        <a class="btn btn-primary" href="@Url.Action("DepartmentAdd")"><i class="fas fa-plus mr-2"></i>Departman ekle</a>
+    </div>
+
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th class="cell-fit">ID</th>
+                <th>Departman adı</th>
+                <th class="cell-fit cell-num">Personel sayısı</th>
+                <th class="cell-actions">İşlemler</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                var personnelCount = item.Personnels == null ? 0 : item.Personnels.Count;
+
+                // Onay penceresinde yazacak açıklama
+                var deleteText = "Departman listeden kalkar ve panelden geri alınamaz.";
+                if (personnelCount > 0)
+                {
+                    deleteText += " İçindeki " + personnelCount + " personelin kaydı silinmez.";
+                }
+
+                <tr>
+                    <td>@item.DepartmentId</td>
+                    <td>@item.DepartmentName</td>
+                    <td class="cell-num">@personnelCount</td>
+                    <td class="cell-actions">
+                        <a class="btn btn-light" href="@Url.Action("DepartmentDetail", new { id = item.DepartmentId })"><i class="fas fa-users mr-1"></i>Personeller</a>
+                        <a class="btn btn-light" href="@Url.Action("DepartmentGet", new { id = item.DepartmentId })"><i class="fas fa-pen mr-1"></i>Güncelle</a>
+                        @* data-swal-delete *@
+                        <button type="button" class="btn btn-outline-danger"
+                                data-swal-delete
+                                data-delete-url="@Url.Action("DepartmentDelete", new { id = item.DepartmentId })"
+                                data-delete-name="@item.DepartmentName"
+                                data-delete-text="@deleteText">
+                            <i class="fas fa-trash-alt mr-1"></i>Sil
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@section scripts {
+    @* SweetAlert2 kütüphanesi, sonra onu kullanan betiğimiz *@
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.14.5/dist/sweetalert2.all.min.js"></script>
+    <script src="@Url.Content("~/Content/admin/sweetalert.js")"></script>
+}

@@ -1,0 +1,20 @@
+﻿@model MVCOnlineTicariOtomasyon.Models.Entities.Invoice
+
+@{
+    ViewBag.PageTitle = "Yeni fatura";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+@using (Html.BeginForm("InvoiceAdd", "Invoice", FormMethod.Post, new { @class = "card form-card form-card--wide" }))
+{
+    @Html.AntiForgeryToken()
+
+    <div class="card-body">
+        @Html.Partial("_InvoiceForm")
+    </div>
+
+    <div class="card-footer">
+        <button type="submit" class="btn btn-primary">Faturayı oluştur</button>
+        <a class="btn btn-light" href="@Url.Action("Index")">Vazgeç</a>
+    </div>
+}

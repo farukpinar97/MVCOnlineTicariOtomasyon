@@ -1,0 +1,42 @@
+﻿@model List<MVCOnlineTicariOtomasyon.Models.Entities.Current>
+
+@* Aktif carilerin listesi *@
+
+<section class="card quick-card">
+    <div class="card-header quick-card__head">
+        <div>
+            <h2 class="quick-card__title">Cariler</h2>
+            <div class="quick-card__note">Üst çubuktaki arama bu tabloda arar.</div>
+        </div>
+        <a href="@Url.Action("Index", "Current")">Carilere git</a>
+    </div>
+
+    @if (Model.Count == 0)
+    {
+        <p class="quick-card__empty">Henüz cari yok.</p>
+    }
+    else
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th class="cell-fit">ID</th>
+                    <th>Ad soyad</th>
+                    <th>Şehir</th>
+                    <th>E-posta</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.CurrentId</td>
+                        <td>@item.CurrentName @item.CurrentSurname</td>
+                        <td>@item.CurrentCity</td>
+                        <td>@item.CurrentMail</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</section>

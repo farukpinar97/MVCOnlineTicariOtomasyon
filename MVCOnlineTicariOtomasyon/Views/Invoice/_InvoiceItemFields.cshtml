@@ -1,0 +1,36 @@
+﻿@model MVCOnlineTicariOtomasyon.Models.Entities.InvoiceItem
+
+@* Fatura kaleminin alanları *@
+@{
+    // Fiyat örneğindeki ondalık ayracı sunucunun bölge ayarından gelir
+    string decimalSeparator = System.Globalization.CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;
+    string priceExample = (1250.5m).ToString("0.00");
+}
+
+<div class="form-group">
+    @Html.LabelFor(x => x.InvoiceItemDescription)
+    @Html.TextBoxFor(x => x.InvoiceItemDescription, new { @class = "form-control", maxlength = 100, required = "required", autocomplete = "off" })
+    @Html.ValidationMessageFor(x => x.InvoiceItemDescription)
+</div>
+
+<div class="form-row">
+    <div class="form-group col-sm-4 mb-sm-0">
+        @Html.LabelFor(x => x.InvoiceItemQuantity)
+        @Html.TextBoxFor(x => x.InvoiceItemQuantity, new { @class = "form-control", type = "number", min = 1, step = 1, required = "required" })
+        @Html.ValidationMessageFor(x => x.InvoiceItemQuantity)
+    </div>
+    <div class="form-group col-sm-4 mb-sm-0">
+        @Html.LabelFor(x => x.InvoiceItemUnitPrice)
+        <div class="input-group">
+            @Html.TextBoxFor(x => x.InvoiceItemUnitPrice, new { @class = "form-control", inputmode = "decimal", required = "required", autocomplete = "off" })
+            <div class="input-group-append"><span class="input-group-text">₺</span></div>
+        </div>
+        @Html.ValidationMessageFor(x => x.InvoiceItemUnitPrice)
+        <small class="form-text text-muted">Örnek: @priceExample</small>
+    </div>
+    <div class="form-group col-sm-4 mb-0">
+        <label>Tutar</label>
+        @* Sadece gösterim *@
+        <div class="sale-total" data-item-total data-decimal="@decimalSeparator" aria-live="polite">&ndash;</div>
+    </div>
+</div>

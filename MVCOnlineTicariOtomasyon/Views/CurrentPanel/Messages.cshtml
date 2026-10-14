@@ -1,0 +1,119 @@
+﻿@using MVCOnlineTicariOtomasyon.Models.Entities
+@model List<Message>
+
+@{
+    Layout = "~/Views/Shared/_CurrentLayout.cshtml";
+
+    var tr = new System.Globalization.CultureInfo("tr-TR");
+    bool sent = ViewBag.Folder == "sent";
+    string q = ViewBag.Query;
+
+    // Kişinin adı ve baş harfleri
+    Func<Current, string> nameOf = x => x == null ? "Silinmiş cari" : x.CurrentName + " " + x.CurrentSurname;
+    Func<Current, string> initialsOf = x => x == null ? "?" :
+        ((String.IsNullOrEmpty(x.CurrentName) ? "" : x.CurrentName.Substring(0, 1)) +
+         (String.IsNullOrEmpty(x.CurrentSurname) ? "" : x.CurrentSurname.Substring(0, 1))).ToUpper(tr);
+
+    // Tarih
+    Func<DateTime, string> shortDate = d =>
+        d.Date == DateTime.Today ? d.ToString("HH:mm", tr) :
+        d.Year == DateTime.Today.Year ? d.ToString("d MMM", tr) :
+        d.ToString("dd.MM.yyyy", tr);
+
+    // Listede mesajın ilk satırı
+    Func<string, string> preview = text =>
+    {
+        string flat = String.Join(" ", (text ?? "").Split(new[] { ' ', '\r', '\n', '\t' }, StringSplitOptions.RemoveEmptyEntries));
+        return flat.Length > 120 ? flat.Substring(0, 120) + "…" : flat;
+    };
+}
+
+<div class="mail">
+    @Html.Partial("_MailFolders")
+
+    <section class="card mail-box">
+        <header class="mail-box__head">
+            <div>
+                <h2 class="mail-box__title">@(sent ? "Gönderilenler" : "Gelen kutusu")</h2>
+                <span class="mail-box__sub">
+                    @if (q != null)
+                    {
+                        @:“@q” için @Model.Count sonuç · <a href="@Url.Action("Messages", new { folder = sent ? "sent" : null })">Aramayı temizle</a>
+                    }
+                    else
+                    {
+                        @:@Model.Count mesaj
+                    }
+                </span>
+            </div>
+            <form class="list-search mail-box__search" method="get" action="@Url.Action("Messages")" role="search">
+                @if (sent)
+                {
+                    <input type="hidden" name="folder" value="sent" />
+                }
+                <i class="fas fa-search list-search__icon" aria-hidden="true"></i>
+                <input class="form-control" type="search" name="q" value="@q" placeholder="Mesajlarda ara" aria-label="Mesajlarda ara" maxlength="50" autocomplete="off" />
+            </form>
+        </header>
+
+        @if (Model.Count == 0)
+        {
+            <div class="mail-empty">
+                <i class="fas @(q != null ? "fa-search" : sent ? "fa-paper-plane" : "fa-inbox")" aria-hidden="true"></i>
+                @if (q != null)
+                {
+                    <p>Aramayla eşleşen mesaj yok.</p>
+                }
+                else if (sent)
+                {
+                    <p>Henüz kimseye mesaj göndermedin.</p>
+                    <a class="btn btn-primary" href="@Url.Action("NewMessage")"><i class="fas fa-pen mr-2"></i>Yeni mesaj</a>
+                }
+                else
+                {
+                    <p>Gelen kutun boş. Sana mesaj gönderildiğinde burada görünür.</p>
+                }
+            </div>
+        }
+        else
+        {
+            <ul class="mail-list">
+                @foreach (var m in Model)
+                {
+                    // Gelen kutusunda gönderen, gönderilenlerde alıcı gösterilir
+                    var person = sent ? m.Receiver : m.Sender;
+                    bool unread = !sent && !m.IsRead;
+
+                    <li>
+                        <a class="mail-row @(unread ? "is-unread" : null)" href="@Url.Action("MessageDetail", new { id = m.MessageId })">
+                            <span class="mail-row__avatar" aria-hidden="true">@initialsOf(person)</span>
+                            <span class="mail-row__who">
+                                @if (sent)
+                                {
+                                    <span class="mail-row__to">Kime:</span>
+                                }
+                                @nameOf(person)
+                            </span>
+                            <span class="mail-row__text">
+                                <span class="mail-row__subject">@m.Subject</span>
+                                <span class="mail-row__preview">@preview(m.Content)</span>
+                            </span>
+                            <span class="mail-row__meta">
+                                @if (unread)
+                                {
+                                    <span class="mail-row__dot" title="Okunmadı"><span class="sr-only">Okunmadı</span></span>
+                                }
+                                @if (sent)
+                                {
+                                    @* Gönderilen mesaj karşı tarafta okunduysa çift tik *@
+                                    <i class="fas @(m.IsRead ? "fa-check-double is-read" : "fa-check") mail-row__seen" title="@(m.IsRead ? "Okundu" : "Henüz okunmadı")" aria-hidden="true"></i>
+                                }
+                                <time class="mail-row__date" datetime="@m.Date.ToString("s")">@shortDate(m.Date)</time>
+                            </span>
+                        </a>
+                    </li>
+                }
+            </ul>
+        }
+    </section>
+</div>

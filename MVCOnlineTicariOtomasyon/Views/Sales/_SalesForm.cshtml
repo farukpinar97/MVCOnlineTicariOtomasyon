@@ -1,0 +1,101 @@
+﻿@using MVCOnlineTicariOtomasyon.Models.Entities
+@model SalesTransaction
+
+@* Satış formunun alanları *@
+@{
+    var products = (List<Product>)ViewBag.Products;
+    var currents = (List<SelectListItem>)ViewBag.Currents;
+    var personnels = (List<SelectListItem>)ViewBag.Personnels;
+
+    int originalProductId = ViewBag.OriginalProductId;
+    int originalQuantity = ViewBag.OriginalQuantity;
+
+    bool isUpdate = Model != null && Model.SalesTransactionId != 0;
+
+    // Seçili ürün
+    int selectedProductId = Model != null ? Model.ProductId : (int)(ViewBag.SelectedProductId ?? 0);
+
+    var invariant = System.Globalization.CultureInfo.InvariantCulture;
+    string decimalSeparator = System.Globalization.CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;
+    string priceExample = (1250.5m).ToString("0.00");
+    string productError = ViewData.ModelState.IsValidField("ProductId") ? null : "input-validation-error";
+}
+
+<div data-sale-form data-decimal="@decimalSeparator">
+
+    <div class="form-group">
+        @Html.LabelFor(x => x.ProductId)
+        @* Her seçenek ürünün satış fiyatını ve stokunu taşır *@
+        <select class="form-control @productError" id="ProductId" name="ProductId" required autofocus>
+            <option value="">Ürün seç</option>
+            @foreach (var p in products)
+            {
+                var available = p.Stock + (p.ProductId == originalProductId ? originalQuantity : 0);
+                var isSelected = p.ProductId == selectedProductId;
+
+                var label = p.ProductName;
+                if (!String.IsNullOrEmpty(p.Brand))
+                {
+                    label += " (" + p.Brand + ")";
+                }
+                label += available == 0 ? ", tükendi" : ", stokta " + available;
+
+                <option value="@p.ProductId"
+                        data-price="@p.SalePrice.ToString("0.00", invariant)"
+                        data-stock="@available"
+                        selected="@(isSelected ? "selected" : null)"
+                        disabled="@(available == 0 && !isSelected ? "disabled" : null)">@label</option>
+            }
+        </select>
+        @Html.ValidationMessageFor(x => x.ProductId)
+    </div>
+
+    <div class="form-row">
+        <div class="form-group col-md-6">
+            @Html.LabelFor(x => x.CurrentId)
+            @Html.DropDownListFor(x => x.CurrentId, currents, "Cari seç", new { @class = "form-control", required = "required" })
+            @Html.ValidationMessageFor(x => x.CurrentId)
+        </div>
+        <div class="form-group col-md-6">
+            @Html.LabelFor(x => x.PersonnelId)
+            @Html.DropDownListFor(x => x.PersonnelId, personnels, "Personel seç", new { @class = "form-control", required = "required" })
+            @Html.ValidationMessageFor(x => x.PersonnelId)
+        </div>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group col-md-4">
+            @Html.LabelFor(x => x.SalesTransactionQuantity)
+            @Html.TextBoxFor(x => x.SalesTransactionQuantity, new { @class = "form-control", type = "number", min = 1, step = 1, required = "required" })
+            @Html.ValidationMessageFor(x => x.SalesTransactionQuantity)
+            <small class="form-text text-muted" id="stockHint"></small>
+        </div>
+        <div class="form-group col-md-4">
+            @Html.LabelFor(x => x.SalesTransactionUnitPrice)
+            <div class="input-group">
+                @Html.TextBoxFor(x => x.SalesTransactionUnitPrice, new { @class = "form-control", inputmode = "decimal", required = "required", autocomplete = "off" })
+                <div class="input-group-append"><span class="input-group-text">₺</span></div>
+            </div>
+            @Html.ValidationMessageFor(x => x.SalesTransactionUnitPrice)
+            <small class="form-text text-muted">Ürün seçilince dolar, istersen değiştir. Örnek: @priceExample</small>
+        </div>
+        <div class="form-group col-md-4">
+            <label>Toplam</label>
+            @* Sadece gösterim *@
+            <div class="sale-total" id="saleTotal" aria-live="polite">&ndash;</div>
+        </div>
+    </div>
+
+    @* Tarih sadece güncellemede görünür *@
+    @if (isUpdate)
+    {
+        <div class="form-row">
+            <div class="form-group col-md-4 mb-0">
+                @Html.LabelFor(x => x.SalesTransactionDate)
+                @Html.TextBoxFor(x => x.SalesTransactionDate, "{0:yyyy-MM-dd}", new { @class = "form-control", type = "date", required = "required" })
+                @Html.ValidationMessageFor(x => x.SalesTransactionDate)
+            </div>
+        </div>
+    }
+
+</div>

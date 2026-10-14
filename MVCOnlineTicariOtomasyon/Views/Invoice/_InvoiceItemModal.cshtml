@@ -1,0 +1,32 @@
+﻿@using MVCOnlineTicariOtomasyon.Models.Entities
+@model InvoiceItem
+
+@* Fatura sayfasındaki "Kalem ekle" penceresinin içi *@
+@{
+    var invoice = (Invoice)ViewBag.Invoice;
+}
+
+@using (Html.BeginForm("InvoiceItemAdd", "Invoice", FormMethod.Post))
+{
+    @Html.AntiForgeryToken()
+    @* Fatura numarası elle yazılmaz *@
+    <input type="hidden" name="InvoiceId" value="@invoice.InvoiceId" />
+
+    <div class="modal-header">
+        <div>
+            <h2 class="modal-title" id="itemModalTitle">Kalem ekle</h2>
+            <p class="modal-subtitle">Fatura no @invoice.InvoiceSerialNo @invoice.InvoiceOrderNo</p>
+        </div>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Kapat"><span aria-hidden="true">&times;</span></button>
+    </div>
+
+    <div class="modal-body">
+        <p class="modal-form__error alert alert-danger" role="alert" hidden>Gönderilemedi. Bağlantını kontrol edip tekrar dene.</p>
+        @Html.Partial("_InvoiceItemFields", Model)
+    </div>
+
+    <div class="modal-footer">
+        <button type="button" class="btn btn-light" data-dismiss="modal">Vazgeç</button>
+        <button type="submit" class="btn btn-primary">Kalemi ekle</button>
+    </div>
+}

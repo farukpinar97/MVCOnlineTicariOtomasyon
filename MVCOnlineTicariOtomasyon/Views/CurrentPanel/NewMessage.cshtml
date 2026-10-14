@@ -1,0 +1,86 @@
+﻿@using MVCOnlineTicariOtomasyon.Models.Entities
+@model Message
+
+@{
+    Layout = "~/Views/Shared/_CurrentLayout.cshtml";
+
+    var tr = new System.Globalization.CultureInfo("tr-TR");
+    var receivers = (List<SelectListItem>)ViewBag.Receivers;
+    var replyTo = ViewBag.ReplyTo as Message;   // yanıtlanan mesaj
+}
+
+<div class="mail">
+    @Html.Partial("_MailFolders")
+
+    @using (Html.BeginForm("NewMessage", "CurrentPanel", FormMethod.Post, new { @class = "card mail-compose" }))
+    {
+        @Html.AntiForgeryToken()
+        if (replyTo != null)
+        {
+            @* Hata olursa yanıtlanan mesaj yine altta görünsün *@
+            <input type="hidden" name="reply" value="@replyTo.MessageId" />
+        }
+
+        <div class="card-header mail-compose__head">
+            <h2 class="mail-box__title">@(replyTo != null ? "Yanıt yaz" : "Yeni mesaj")</h2>
+        </div>
+
+        <div class="card-body">
+            <div class="form-group">
+                @Html.LabelFor(x => x.ReceiverId)
+                @Html.DropDownListFor(x => x.ReceiverId, receivers, "Cari seç", new { @class = "form-control", required = "required" })
+                @Html.ValidationMessageFor(x => x.ReceiverId)
+                @if (receivers.Count == 0)
+                {
+                    <small class="form-text text-muted">Mesaj gönderebileceğin başka cari yok.</small>
+                }
+            </div>
+
+            <div class="form-group">
+                @Html.LabelFor(x => x.Subject)
+                @Html.TextBoxFor(x => x.Subject, new { @class = "form-control", maxlength = 100, required = "required", autocomplete = "off" })
+                @Html.ValidationMessageFor(x => x.Subject)
+            </div>
+
+            <div class="form-group mb-0">
+                @Html.LabelFor(x => x.Content)
+                @Html.TextAreaFor(x => x.Content, new { @class = "form-control mail-compose__text", rows = 9, maxlength = 2000, required = "required", data_counter = "#contentCounter" })
+                @Html.ValidationMessageFor(x => x.Content)
+                <small class="form-text text-muted mail-compose__counter"><span id="contentCounter">0</span> / 2000</small>
+            </div>
+
+            @if (replyTo != null)
+            {
+                @* Yanıtlanan mesaj *@
+                <blockquote class="mail-quote">
+                    <div class="mail-quote__head">
+                        @(replyTo.Sender == null ? "Silinmiş cari" : replyTo.Sender.CurrentName + " " + replyTo.Sender.CurrentSurname),
+                        @replyTo.Date.ToString("d MMMM yyyy HH:mm", tr) tarihinde yazdı:
+                    </div>
+                    <div class="mail-quote__body">@replyTo.Content</div>
+                </blockquote>
+            }
+        </div>
+
+        <div class="card-footer mail-compose__foot">
+            <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane mr-2" aria-hidden="true"></i>Gönder</button>
+            <a class="btn btn-light" href="@(replyTo != null ? Url.Action("MessageDetail", new { id = replyTo.MessageId }) : Url.Action("Messages"))">Vazgeç</a>
+        </div>
+    }
+</div>
+
+@section scripts {
+    <script>
+        // Mesaj yazıldıkça karakter sayısı
+        (function () {
+            var box = document.querySelector('[data-counter]');
+            var counter = document.querySelector(box.getAttribute('data-counter'));
+            function update() {
+                counter.textContent = box.value.length.toLocaleString('tr-TR');
+                counter.parentNode.classList.toggle('is-near', box.value.length > 1800);
+            }
+            box.addEventListener('input', update);
+            update();
+        })();
+    </script>
+}

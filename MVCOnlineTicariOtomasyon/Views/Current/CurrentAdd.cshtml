@@ -1,0 +1,20 @@
+﻿@model MVCOnlineTicariOtomasyon.Models.Entities.Current
+
+@{
+    ViewBag.PageTitle = "Yeni cari";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+@using (Html.BeginForm("CurrentAdd", "Current", FormMethod.Post, new { @class = "card form-card form-card--wide" }))
+{
+    @Html.AntiForgeryToken()
+
+    <div class="card-body">
+        @Html.Partial("_CurrentForm")
+    </div>
+
+    <div class="card-footer">
+        <button type="submit" class="btn btn-primary">Cariyi ekle</button>
+        <a class="btn btn-light" href="@Url.Action("Index")">Vazgeç</a>
+    </div>
+}

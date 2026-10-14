@@ -1,0 +1,25 @@
+﻿@model MVCOnlineTicariOtomasyon.Models.Entities.Category
+
+@{
+    ViewBag.PageTitle = "Yeni kategori";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+@using (Html.BeginForm("CategoryAdd", "Category", FormMethod.Post, new { @class = "card form-card" }))
+{
+    @Html.AntiForgeryToken()
+
+    <div class="card-body">
+        <div class="form-group mb-0">
+            @Html.LabelFor(x => x.CategoryName)
+            @Html.TextBoxFor(x => x.CategoryName, new { @class = "form-control", maxlength = 30, required = "required", autofocus = "autofocus", autocomplete = "off" })
+            @Html.ValidationMessageFor(x => x.CategoryName)
+            <small class="form-text text-muted">En fazla 30 karakter.</small>
+        </div>
+    </div>
+
+    <div class="card-footer">
+        <button type="submit" class="btn btn-primary">Kategoriyi ekle</button>
+        <a class="btn btn-light" href="@Url.Action("Index")">Vazgeç</a>
+    </div>
+}

@@ -1,0 +1,122 @@
+﻿@using MVCOnlineTicariOtomasyon.Models.Entities
+@model List<Product>
+
+@{
+    ViewBag.PageTitle = "Tüm ürünler";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+
+    var tr = new System.Globalization.CultureInfo("tr-TR");
+    var invariant = System.Globalization.CultureInfo.InvariantCulture;
+    int passiveCount = Model.Count(x => !x.Status);
+    string info = Model.Count + " ürün" + (passiveCount > 0 ? ", " + passiveCount + " tanesi pasif" : "");
+}
+
+@* jQuery ve Bootstrap layout'tan geliyor *@
+@section head {
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap4.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/1.5.2/css/buttons.bootstrap4.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.2.3/css/responsive.bootstrap4.min.css" />
+}
+
+<div class="page-bar">
+    <p class="page-bar__info">@info</p>
+    <div class="page-bar__actions">
+        <a class="btn btn-light" href="@Url.Action("Index")"><i class="fas fa-arrow-left mr-2"></i>Aktif ürünlere dön</a>
+    </div>
+</div>
+
+@* data-admin="off" *@
+<table id="productTable" class="table table-bordered dt-responsive nowrap" style="width:100%" data-admin="off">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Ürün adı</th>
+            <th>Marka</th>
+            <th>Kategori</th>
+            <th class="cell-num">Stok</th>
+            <th class="cell-num">Alış fiyatı</th>
+            <th class="cell-num">Satış fiyatı</th>
+            <th>Durum</th>
+            <th class="cell-actions no-export">İşlemler</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.ProductId</td>
+                <td>@item.ProductName</td>
+                <td>@item.Brand</td>
+                <td>@item.Category.CategoryName</td>
+                <td class="cell-num">@item.Stock</td>
+                @* data-order *@
+                <td class="cell-num" data-order="@item.PurchasePrice.ToString(invariant)">@item.PurchasePrice.ToString("N2", tr)</td>
+                <td class="cell-num" data-order="@item.SalePrice.ToString(invariant)">@item.SalePrice.ToString("N2", tr)</td>
+                <td>
+                    @if (item.Status)
+                    {
+                        <span class="badge badge-success">Aktif</span>
+                    }
+                    else
+                    {
+                        <span class="badge badge-secondary">Pasif</span>
+                    }
+                </td>
+                <td class="cell-actions">
+                    <a class="btn btn-light" href="@Url.Action("ProductGet", new { id = item.ProductId })"><i class="fas fa-pen mr-1"></i>Güncelle</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@section scripts {
+    <script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.19/js/dataTables.bootstrap4.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/1.5.2/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/1.5.2/js/buttons.bootstrap4.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/vfs_fonts.js"></script>
+    <script src="https://cdn.datatables.net/buttons/1.5.2/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/1.5.2/js/buttons.print.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/1.5.2/js/buttons.colVis.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.2.3/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.2.3/js/responsive.bootstrap4.min.js"></script>
+    <script>
+        $(function () {
+            // Dışa aktarma butonları temanın açık renkli buton stilini kullansın
+            $.fn.dataTable.Buttons.defaults.dom.button.className = 'btn btn-light';
+
+            // "İşlemler" sütunu dosyaya yazılmaz
+            var dataColumns = { columns: ':not(.no-export)' };
+
+            var table = $('#productTable').DataTable({
+                lengthChange: false,
+                columnDefs: [{ targets: 'no-export', orderable: false, searchable: false }],
+                buttons: [
+                    { extend: 'copy', text: 'Kopyala', exportOptions: dataColumns },
+                    { extend: 'excel', text: 'Excel', exportOptions: dataColumns },
+                    { extend: 'csv', text: 'CSV', exportOptions: dataColumns },
+                    { extend: 'pdf', text: 'PDF', exportOptions: dataColumns },
+                    { extend: 'colvis', text: 'Sütunlar', columns: ':not(.no-export)' }
+                ],
+                language: {
+                    search: 'Ara:',
+                    zeroRecords: 'Aramayla eşleşen ürün yok.',
+                    emptyTable: 'Henüz ürün yok.',
+                    info: '_TOTAL_ üründen _START_ - _END_ arası',
+                    infoEmpty: 'Gösterilecek ürün yok',
+                    infoFiltered: '(toplam _MAX_ ürün içinden)',
+                    paginate: { previous: 'Önceki', next: 'Sonraki' },
+                    buttons: {
+                        copyTitle: 'Panoya kopyalandı',
+                        copySuccess: { _: '%d satır kopyalandı', 1: '1 satır kopyalandı' }
+                    }
+                }
+            });
+
+            table.buttons().container().appendTo('#productTable_wrapper .col-md-6:eq(0)');
+        });
+    </script>
+}

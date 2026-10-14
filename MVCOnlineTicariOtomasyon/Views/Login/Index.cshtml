@@ -1,0 +1,122 @@
+﻿@{
+    // Giriş sayfası yönetim panelinin layout'unu kullanmaz
+    Layout = null;
+
+    string returnUrl = Request.QueryString["ReturnUrl"];
+    string openModal = null;
+    if (!String.IsNullOrEmpty(returnUrl))
+    {
+        openModal = returnUrl.StartsWith("/CurrentPanel", StringComparison.OrdinalIgnoreCase) ? "#currentLoginModal" : "#adminLoginModal";
+    }
+
+    // Tema dosyalarının adresine son değişme zamanı eklenir
+    Func<string, string> versioned = path =>
+        Url.Content(path) + "?v=" + System.IO.File.GetLastWriteTimeUtc(Server.MapPath(path)).Ticks;
+}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Giriş - Ticari Otomasyon</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=IBM+Plex+Sans:400,500,600%7CIBM+Plex+Sans+Condensed:600&amp;subset=latin-ext&amp;display=swap" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.2/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="@versioned("~/Content/admin/admin.css")" />
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js"></script>
+</head>
+<body class="login-page" data-open="@openModal">
+
+    <main class="login">
+
+        <section class="login__brand">
+            <div class="login__logo">
+                <span class="app-brand__mark" aria-hidden="true">
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <path d="M6 2v14M2 7h14M2 12h14" />
+                    </svg>
+                </span>
+                <span class="login__name">Ticari Otomasyon</span>
+            </div>
+            <p class="login__claim">Satış, stok ve cari hesaplar tek defterde.</p>
+            <div class="login__foot">&copy; @DateTime.Now.Year Ticari Otomasyon</div>
+        </section>
+
+        <section class="login__panel">
+            <div class="login__box">
+                <h1 class="login__title">Giriş yap</h1>
+                <p class="login__lead">Nasıl giriş yapacağını seç.</p>
+
+                @if (TempData["Success"] != null)
+                {
+                    <div class="alert alert-success" role="status">@TempData["Success"]</div>
+                }
+                @if (TempData["Error"] != null)
+                {
+                    <div class="alert alert-danger" role="alert">@TempData["Error"]</div>
+                }
+
+                <div class="login__options">
+                    <button type="button" class="login-option" data-toggle="modal" data-target="#currentLoginModal">
+                        <span class="login-option__icon"><i class="fas fa-address-book"></i></span>
+                        <span class="login-option__text">
+                            <span class="login-option__title">Cari girişi</span>
+                            <span class="login-option__desc">Siparişlerini ve bilgilerini görmek için</span>
+                        </span>
+                        <i class="fas fa-chevron-right login-option__arrow" aria-hidden="true"></i>
+                    </button>
+                    <button type="button" class="login-option" data-toggle="modal" data-target="#adminLoginModal">
+                        <span class="login-option__icon"><i class="fas fa-user-shield"></i></span>
+                        <span class="login-option__text">
+                            <span class="login-option__title">Yönetici girişi</span>
+                            <span class="login-option__desc">Yönetim paneline girmek için</span>
+                        </span>
+                        <i class="fas fa-chevron-right login-option__arrow" aria-hidden="true"></i>
+                    </button>
+                </div>
+
+                <div class="login__register">
+                    <span>Cari hesabın yok mu?</span>
+                    <button type="button" class="btn btn-light" data-toggle="modal" data-target="#registerModal">
+                        <i class="fas fa-user-plus mr-2"></i>Kayıt ol
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    @* Cari girişi penceresi *@
+    <div class="modal fade" id="currentLoginModal" tabindex="-1" role="dialog" aria-labelledby="currentLoginTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm-form" role="document">
+            <div class="modal-content" data-modal-slot data-url="@Url.Action("CurrentLogin")">
+                @Html.Action("CurrentLogin", new { returnUrl = returnUrl })
+            </div>
+        </div>
+    </div>
+
+    @* Yönetici girişi penceresi *@
+    <div class="modal fade" id="adminLoginModal" tabindex="-1" role="dialog" aria-labelledby="adminLoginTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm-form" role="document">
+            <div class="modal-content" data-modal-slot data-url="@Url.Action("AdminLogin")">
+                @Html.Action("AdminLogin", new { returnUrl = returnUrl })
+            </div>
+        </div>
+    </div>
+
+    @* Kayıt penceresi *@
+    <div class="modal fade" id="registerModal" tabindex="-1" role="dialog" aria-labelledby="registerTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content" id="registerSlot" data-modal-slot data-url="@Url.Action("CurrentRegister")">
+                @Html.Action("CurrentRegister")
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.2/js/bootstrap.bundle.min.js"></script>
+    <script src="@versioned("~/Content/admin/modal-form.js")"></script>
+</body>
+</html>

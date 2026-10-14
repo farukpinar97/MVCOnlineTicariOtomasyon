@@ -1,0 +1,71 @@
+﻿@using MVCOnlineTicariOtomasyon.Models.Entities
+@model CargoDetail
+
+@{
+    ViewBag.PageTitle = "Yeni kargo";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+
+    var personnels = (List<string>)ViewBag.Personnels;
+    var receivers = (List<string>)ViewBag.Receivers;
+}
+
+@using (Html.BeginForm("CargoAdd", "Cargo", FormMethod.Post, new { @class = "card form-card form-card--wide" }))
+{
+    @Html.AntiForgeryToken()
+
+    <div class="card-body">
+
+        @* Takip kodu controller'da rastgele üretilir *@
+        <div class="cargo-code-box">
+            <span class="cargo-code-box__label">Takip kodu</span>
+            <span class="cargo-code cargo-code--lg" aria-live="polite">@Model.TrackingCode</span>
+            <span class="cargo-code-box__hint">Kayıttan sonra alıcıya bu kodu ver.</span>
+            @Html.HiddenFor(x => x.TrackingCode)
+        </div>
+
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label for="Receiver">Alıcı</label>
+                @* Cariler öneri olarak çıkar, listede olmayan bir ad da yazılabilir *@
+                @Html.TextBoxFor(x => x.Receiver, new { @class = "form-control", maxlength = 25, required = "required", autocomplete = "off", list = "receiverList", autofocus = "autofocus" })
+                <datalist id="receiverList">
+                    @foreach (var name in receivers)
+                    {
+                        <option value="@name"></option>
+                    }
+                </datalist>
+                @Html.ValidationMessageFor(x => x.Receiver)
+                <small class="form-text text-muted">Yazmaya başlayınca cariler önerilir.</small>
+            </div>
+            <div class="form-group col-md-6">
+                <label for="Personnel">Gönderen personel</label>
+                @Html.DropDownListFor(x => x.Personnel, new SelectList(personnels, Model.Personnel), "Personel seç", new { @class = "form-control", required = "required" })
+                @Html.ValidationMessageFor(x => x.Personnel)
+                @if (personnels.Count == 0)
+                {
+                    <small class="form-text text-muted">Henüz personel yok. <a href="@Url.Action("PersonnelAdd", "Personnel")">Önce bir personel ekle</a>.</small>
+                }
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label for="Date">Gönderim tarihi</label>
+                @Html.TextBoxFor(x => x.Date, "{0:yyyy-MM-dd'T'HH:mm}", new { @class = "form-control", type = "datetime-local", required = "required" })
+                @Html.ValidationMessageFor(x => x.Date)
+            </div>
+        </div>
+
+        <div class="form-group mb-0">
+            <label for="Description">Açıklama</label>
+            @Html.TextAreaFor(x => x.Description, new { @class = "form-control", rows = 3, maxlength = 300, placeholder = "Ör. 2 koli, kırılacak eşya" })
+            @Html.ValidationMessageFor(x => x.Description)
+            <small class="form-text text-muted">İsteğe bağlı. En fazla 300 karakter.</small>
+        </div>
+    </div>
+
+    <div class="card-footer">
+        <button type="submit" class="btn btn-primary">Kargoyu kaydet</button>
+        <a class="btn btn-light" href="@Url.Action("Index")">Vazgeç</a>
+    </div>
+}

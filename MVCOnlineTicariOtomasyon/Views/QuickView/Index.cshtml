@@ -1,0 +1,13 @@
+﻿@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+@* Her @Html.Action satırı QuickViewController'daki aynı adlı metodu çalıştırır *@
+<div class="quick-grid">
+    @Html.Action("CategoryTable")
+    @Html.Action("CityTable")
+    @Html.Action("DepartmentTable")
+    @Html.Action("BrandTable")
+</div>
+
+@Html.Action("CurrentTable")

@@ -1,0 +1,26 @@
+﻿@model MVCOnlineTicariOtomasyon.Models.Entities.Department
+
+@{
+    ViewBag.PageTitle = "Departmanı güncelle";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+@using (Html.BeginForm("DepartmentUpdate", "Department", FormMethod.Post, new { @class = "card form-card" }))
+{
+    @Html.AntiForgeryToken()
+    @Html.HiddenFor(x => x.DepartmentId)
+
+    <div class="card-body">
+        <div class="form-group mb-0">
+            @Html.LabelFor(x => x.DepartmentName)
+            @Html.TextBoxFor(x => x.DepartmentName, new { @class = "form-control", maxlength = 30, required = "required", autofocus = "autofocus", autocomplete = "off" })
+            @Html.ValidationMessageFor(x => x.DepartmentName)
+            <small class="form-text text-muted">En fazla 30 karakter.</small>
+        </div>
+    </div>
+
+    <div class="card-footer">
+        <button type="submit" class="btn btn-primary">Güncelle</button>
+        <a class="btn btn-light" href="@Url.Action("Index")">Vazgeç</a>
+    </div>
+}

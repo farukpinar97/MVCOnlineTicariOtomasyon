@@ -1,0 +1,59 @@
+﻿@using MVCOnlineTicariOtomasyon.Models.Entities
+@model List<Personnel>
+
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+
+    // Controller'ın hazırladığı sayılar
+    var salesCounts = (Dictionary<int, int>)ViewBag.SalesCounts;
+}
+
+@if (Model.Count == 0)
+{
+    <div class="empty-state">
+        <h2>Henüz personel yok</h2>
+        <p>Satışları kimin yaptığını izlemek için personelleri ekle.</p>
+        <a class="btn btn-primary" href="@Url.Action("PersonnelAdd")"><i class="fas fa-plus mr-2"></i>Personel ekle</a>
+    </div>
+}
+else
+{
+    <div class="page-bar">
+        <p class="page-bar__info">@Model.Count personel</p>
+        <a class="btn btn-primary" href="@Url.Action("PersonnelAdd")"><i class="fas fa-plus mr-2"></i>Personel ekle</a>
+    </div>
+
+    @* data-search-item *@
+    <div class="card-grid">
+        @foreach (var item in Model)
+        {
+            // Fotoğraf yoksa ya da yüklenemezse adın ve soyadın baş harfleri görünür
+            var first = String.IsNullOrEmpty(item.PersonnelName) ? "" : item.PersonnelName.Substring(0, 1);
+            var last = String.IsNullOrEmpty(item.PersonnelSurname) ? "" : item.PersonnelSurname.Substring(0, 1);
+            var initials = (first + last).ToUpper();
+
+            var departmentName = item.Department == null ? "" : item.Department.DepartmentName;
+            var salesCount = salesCounts.ContainsKey(item.PersonnelId) ? salesCounts[item.PersonnelId] : 0;
+
+            <div class="person-card" data-search-item="@item.PersonnelName @item.PersonnelSurname @departmentName">
+                <span class="thumb thumb--round thumb--lg">
+                    <span>@initials</span>
+                    @if (!String.IsNullOrWhiteSpace(item.PersonnelImage))
+                    {
+                        <img src="@item.PersonnelImage" alt="" loading="lazy" />
+                    }
+                </span>
+                <div class="person-card__body">
+                    <div class="person-card__name">@item.PersonnelName @item.PersonnelSurname</div>
+                    <div class="person-card__meta">@departmentName</div>
+                </div>
+                <div class="person-card__actions">
+                    @* Satış sayfası Department controller'ında *@
+                    <a class="btn btn-light" href="@Url.Action("DepartmentPersonnelSales", "Department", new { id = item.PersonnelId, source = "personnel" })"><i class="fas fa-receipt mr-1"></i>Satış geçmişi</a>
+                    <a class="btn btn-light" href="@Url.Action("PersonnelGet", new { id = item.PersonnelId })"><i class="fas fa-pen mr-1"></i>Güncelle</a>
+                    <span class="person-card__stat">@salesCount satış</span>
+                </div>
+            </div>
+        }
+    </div>
+}

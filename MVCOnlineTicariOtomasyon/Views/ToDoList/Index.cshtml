@@ -1,0 +1,100 @@
+﻿@using MVCOnlineTicariOtomasyon.Models.Entities
+@model List<ToDoList>
+
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+
+    var tr = new System.Globalization.CultureInfo("tr-TR");
+
+    int openCount = Model.Count(x => !x.Status);
+    int doneCount = Model.Count - openCount;
+
+    var countText = openCount + " açık";
+    if (doneCount > 0)
+    {
+        countText += ", " + doneCount + " tamamlandı";
+    }
+}
+
+@* Renkli kartlar *@
+<div class="stat-tiles">
+    <a class="stat-tile stat-tile--green" href="@Url.Action("Index", "Current")">
+        <span class="stat-tile__value">@(((int)ViewBag.CurrentCount).ToString("N0", tr))</span>
+        <span class="stat-tile__label">Cari</span>
+        <i class="fas fa-address-book stat-tile__icon" aria-hidden="true"></i>
+        <span class="stat-tile__more">Carilere git</span>
+    </a>
+    <a class="stat-tile stat-tile--blue" href="@Url.Action("Index", "QuickView")">
+        <span class="stat-tile__value">@(((int)ViewBag.CityCount).ToString("N0", tr))</span>
+        <span class="stat-tile__label">Carilerin bulunduğu şehir</span>
+        <i class="fas fa-map-marker-alt stat-tile__icon" aria-hidden="true"></i>
+        <span class="stat-tile__more">Şehirlere göre cari</span>
+    </a>
+    <a class="stat-tile stat-tile--amber" href="@Url.Action("Index", "Product")">
+        <span class="stat-tile__value">@(((int)ViewBag.ProductCount).ToString("N0", tr))</span>
+        <span class="stat-tile__label">Aktif ürün</span>
+        <i class="fas fa-box-open stat-tile__icon" aria-hidden="true"></i>
+        <span class="stat-tile__more">Ürünlere git</span>
+    </a>
+    <a class="stat-tile stat-tile--plum" href="@Url.Action("Index", "Category")">
+        <span class="stat-tile__value">@(((int)ViewBag.CategoryCount).ToString("N0", tr))</span>
+        <span class="stat-tile__label">Kategori</span>
+        <i class="fas fa-tags stat-tile__icon" aria-hidden="true"></i>
+        <span class="stat-tile__more">Kategorilere git</span>
+    </a>
+</div>
+
+<section class="card todo">
+    <div class="card-header todo__head">
+        <h2 class="todo__title">Yapılacaklar</h2>
+        @if (Model.Count > 0)
+        {
+            <span class="todo__count">@countText</span>
+        }
+    </div>
+
+    @* Yeni iş *@
+    <form class="todo__add" method="post" action="@Url.Action("ToDoAdd")">
+        @Html.AntiForgeryToken()
+        <label class="sr-only" for="todoHeader">Yeni iş</label>
+        <input class="form-control" id="todoHeader" name="header" type="text" required autocomplete="off" placeholder="Yeni iş" />
+        <button type="submit" class="btn btn-primary"><i class="fas fa-plus mr-2"></i>Ekle</button>
+    </form>
+
+    @if (Model.Count == 0)
+    {
+        <p class="todo__empty">Yapılacak iş yok.</p>
+    }
+    else
+    {
+        <ul class="todo__list">
+            @foreach (var item in Model)
+            {
+                <li class="todo__item @(item.Status ? "is-done" : null)">
+                    @* Kutucuk bir düğme *@
+                    <form method="post" action="@Url.Action("ToDoToggle", new { id = item.ToDoListId })">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="todo__check"
+                                aria-pressed="@(item.Status ? "true" : "false")"
+                                aria-label="@(item.ToDoListHeader + ": tamamlandı")"
+                                title="@(item.Status ? "Tamamlanmadı olarak işaretle" : "Tamamlandı olarak işaretle")">
+                            <i class="fas fa-check" aria-hidden="true"></i>
+                        </button>
+                    </form>
+
+                    <span class="todo__text">@item.ToDoListHeader</span>
+
+                    @* Onay penceresi layout'ta *@
+                    <button type="button" class="todo__delete"
+                            data-toggle="modal" data-target="#deleteModal"
+                            data-delete-url="@Url.Action("ToDoDelete", new { id = item.ToDoListId })"
+                            data-delete-name="@item.ToDoListHeader"
+                            data-delete-text="İş listeden tamamen silinir. Bu işlem geri alınamaz."
+                            aria-label="@(item.ToDoListHeader + " işini sil")">
+                        <i class="fas fa-trash-alt" aria-hidden="true"></i>
+                    </button>
+                </li>
+            }
+        </ul>
+    }
+</section>

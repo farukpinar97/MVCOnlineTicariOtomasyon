@@ -1,0 +1,179 @@
+﻿@using MVCOnlineTicariOtomasyon.Models.ViewModels
+@model CargoTrackViewModel
+
+@{
+    ViewBag.PageTitle = "Kargo takibi";
+    ViewBag.ActiveMenu = "Cargo";   // menüde "Kargolar" seçili görünsün
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+
+    var tr = new System.Globalization.CultureInfo("tr-TR");
+    var cargo = Model.Cargo;
+    var statuses = Model.Statuses;
+    var options = (string[])ViewBag.StatusOptions;
+
+    string statusError = ViewData.ModelState.IsValidField("Description") ? null : "input-validation-error";
+    string dateError = ViewData.ModelState.IsValidField("Date") ? null : "input-validation-error";
+
+    // Tarih kutusunun değeri
+    var dateState = ViewData.ModelState["Date"];
+    string dateValue = dateError != null && dateState != null && dateState.Value != null
+        ? dateState.Value.AttemptedValue
+        : Model.NewStatus.Date.ToString("yyyy-MM-dd'T'HH:mm", System.Globalization.CultureInfo.InvariantCulture);
+}
+
+<div class="page-bar">
+    <a class="btn btn-light" href="@Url.Action("Index")"><i class="fas fa-arrow-left mr-2"></i>Kargolara dön</a>
+    <a class="btn btn-primary" href="#newStatus"><i class="fas fa-plus mr-2"></i>Durum ekle</a>
+</div>
+
+<div class="cargo-layout">
+
+    @* Sol *@
+    <section class="card cargo-card">
+        <div class="cargo-card__head">
+            <span class="cargo-code-box__label">Takip kodu</span>
+            <span class="cargo-code cargo-code--lg">@cargo.TrackingCode</span>
+            @if (Model.IsDelivered)
+            {
+                <span class="cargo-pill is-delivered"><i class="fas fa-check mr-1"></i>Teslim edildi</span>
+            }
+            else if (statuses.Count > 0)
+            {
+                <span class="cargo-pill"><i class="fas fa-truck mr-1"></i>@statuses[0].Description</span>
+            }
+        </div>
+        <dl class="cargo-facts">
+            <div>
+                <dt>Alıcı</dt>
+                <dd>@cargo.Receiver</dd>
+            </div>
+            <div>
+                <dt>Gönderen personel</dt>
+                <dd>@cargo.Personnel</dd>
+            </div>
+            <div>
+                <dt>Gönderim tarihi</dt>
+                <dd>@cargo.Date.ToString("d MMMM yyyy, HH:mm", tr)</dd>
+            </div>
+            <div>
+                <dt>Açıklama</dt>
+                <dd>@(String.IsNullOrWhiteSpace(cargo.Description) ? "–" : cargo.Description)</dd>
+            </div>
+        </dl>
+
+        @* Takip kodunun QR kodu *@
+        <div class="cargo-qr">
+            <img class="cargo-qr__image" src="@Url.Action("Image", "QRCode", new { text = cargo.TrackingCode })" alt="@cargo.TrackingCode takip kodunun QR kodu" width="112" height="112" loading="lazy" />
+            <div class="cargo-qr__body">
+                <span class="cargo-qr__title">QR kod</span>
+                <span class="cargo-qr__hint">Okutunca takip kodu çıkar.</span>
+                <div class="cargo-qr__actions">
+                    <a class="btn btn-light btn-sm" href="@Url.Action("Image", "QRCode", new { text = cargo.TrackingCode, download = true })"><i class="fas fa-download mr-1"></i>İndir</a>
+                    <a class="btn btn-light btn-sm" href="@Url.Action("Index", "QRCode", new { code = cargo.TrackingCode })"><i class="fas fa-expand mr-1"></i>Büyüt</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    @* Sağ *@
+    <section class="card cargo-card">
+        <div class="card-header cargo-card__title">
+            <h2>Kargo durumu</h2>
+            <span>@statuses.Count hareket</span>
+        </div>
+
+        @if (statuses.Count == 0)
+        {
+            <p class="cargo-card__empty">Bu kargo için henüz durum girilmedi.</p>
+        }
+        else
+        {
+            <ol class="track">
+                @for (int i = 0; i < statuses.Count; i++)
+                {
+                    var s = statuses[i];
+                    bool isCurrent = i == 0;
+                    bool delivered = MVCOnlineTicariOtomasyon.Controllers.CargoController.IsDeliveredText(s.Description);
+
+                    <li class="track__item @(isCurrent ? "is-current" : null) @(delivered ? "is-delivered" : null)">
+                        <span class="track__dot" aria-hidden="true"></span>
+                        <div class="track__body">
+                            <div class="track__text">
+                                @s.Description
+                                @if (isCurrent)
+                                {
+                                    <span class="track__now">Şu anki durum</span>
+                                }
+                            </div>
+                            <time class="track__date" datetime="@s.Date.ToString("s")">@s.Date.ToString("d MMMM yyyy, dddd HH:mm", tr)</time>
+                        </div>
+                        <button type="button" class="track__delete" title="Bu durumu sil"
+                                data-toggle="modal" data-target="#deleteModal"
+                                data-delete-url="@Url.Action("CargoStatusDelete", new { id = s.CargoTrackingId })"
+                                data-delete-name="@s.Description"
+                                data-delete-text="Bu durum kargonun geçmişinden silinir. Bu işlem geri alınamaz.">
+                            <i class="fas fa-times" aria-hidden="true"></i><span class="sr-only">Sil</span>
+                        </button>
+                    </li>
+                }
+            </ol>
+        }
+
+        @* Yeni durum *@
+        <form class="cargo-status-form" id="newStatus" method="post" action="@Url.Action("CargoStatusAdd")">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="TrackingCode" value="@cargo.TrackingCode" />
+
+            <h3 class="cargo-status-form__title">Durum ekle</h3>
+            <div class="form-row">
+                <div class="form-group col-md-7 mb-md-0">
+                    <label for="Description">Durum</label>
+                    <input class="form-control @statusError" id="Description" name="Description" type="text" value="@Model.NewStatus.Description" maxlength="100" required autocomplete="off" list="statusOptions" placeholder="Seç ya da yaz" />
+                    <datalist id="statusOptions">
+                        @foreach (var option in options)
+                        {
+                            <option value="@option"></option>
+                        }
+                    </datalist>
+                    @Html.ValidationMessage("Description")
+                </div>
+                <div class="form-group col-md-5 mb-md-0">
+                    <label for="Date">Tarih ve saat</label>
+                    <input class="form-control @dateError" id="Date" name="Date" type="datetime-local" value="@dateValue" required />
+                    @Html.ValidationMessage("Date")
+                </div>
+            </div>
+
+            @* Sık kullanılan durumlar *@
+            <div class="status-chips" aria-label="Hazır durumlar">
+                @foreach (var option in options)
+                {
+                    <button type="button" class="status-chip" data-status="@option">@option</button>
+                }
+            </div>
+
+            <button type="submit" class="btn btn-primary"><i class="fas fa-plus mr-2"></i>Durumu ekle</button>
+        </form>
+    </section>
+
+</div>
+
+@section scripts {
+    <script>
+        // Durum formunda hata varsa sayfa açılınca form görünsün
+        (function () {
+            var invalid = document.querySelector('#newStatus .input-validation-error');
+            if (invalid) { invalid.scrollIntoView({ block: 'center' }); invalid.focus({ preventScroll: true }); }
+        })();
+
+        // Hazır durum düğmesine tıklanınca durum kutusuna yazılır
+        document.addEventListener('click', function (e) {
+            var chip = e.target.closest('[data-status]');
+            if (!chip) { return; }
+            var input = document.getElementById('Description');
+            input.value = chip.getAttribute('data-status');
+            input.classList.remove('input-validation-error');
+            input.focus();
+        });
+    </script>
+}

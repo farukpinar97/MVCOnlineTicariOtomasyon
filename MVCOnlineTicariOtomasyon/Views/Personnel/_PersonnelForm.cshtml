@@ -1,0 +1,73 @@
+﻿@model MVCOnlineTicariOtomasyon.Models.Entities.Personnel
+
+@* Personel formunun alanları *@
+@{
+    var departments = (List<SelectListItem>)ViewBag.Departments;
+
+    // Güncellemede personelin şu anki fotoğrafı önizleme kutusunda görünür
+    bool isUpdate = Model != null && Model.PersonnelId > 0;
+    string currentImage = Model == null ? null : Model.PersonnelImage;
+    bool hasImage = !String.IsNullOrWhiteSpace(currentImage);
+    bool imageLost = ViewBag.ImageLost == true;
+}
+
+<div class="form-row">
+    <div class="form-group col-md-6">
+        @Html.LabelFor(x => x.PersonnelName)
+        @Html.TextBoxFor(x => x.PersonnelName, new { @class = "form-control", maxlength = 30, required = "required", autofocus = "autofocus", autocomplete = "off" })
+        @Html.ValidationMessageFor(x => x.PersonnelName)
+    </div>
+    <div class="form-group col-md-6">
+        @Html.LabelFor(x => x.PersonnelSurname)
+        @Html.TextBoxFor(x => x.PersonnelSurname, new { @class = "form-control", maxlength = 30, required = "required", autocomplete = "off" })
+        @Html.ValidationMessageFor(x => x.PersonnelSurname)
+    </div>
+</div>
+
+<div class="form-row">
+    <div class="form-group col-md-6">
+        @Html.LabelFor(x => x.DepartmentId)
+        @Html.DropDownListFor(x => x.DepartmentId, departments, "Departman seç", new { @class = "form-control", required = "required" })
+        @Html.ValidationMessageFor(x => x.DepartmentId)
+        @if (departments.Count == 0)
+        {
+            <small class="form-text text-muted">Henüz departman yok. <a href="@Url.Action("DepartmentAdd", "Department")">Önce bir departman ekle</a>.</small>
+        }
+    </div>
+</div>
+
+@* Fotoğraf yükleme *@
+<div class="form-group mb-0">
+    <label for="imageFile">Fotoğraf</label>
+    <div class="image-field image-field--upload">
+        <span class="thumb thumb--round thumb--xl" id="imagePreview">
+            <i class="fas fa-user"></i>
+            @if (hasImage)
+            {
+                <img src="@currentImage" alt="" />
+            }
+        </span>
+        <div class="image-field__body">
+            <div class="file-pick">
+                <input class="file-pick__input @(ViewData.ModelState.IsValidField("imageFile") ? null : "input-validation-error")" id="imageFile" name="imageFile" type="file"
+                       accept=".jpg,.jpeg,.png,.webp,.gif" data-preview="#imagePreview" data-max-bytes="2097152" />
+                <label class="btn btn-light file-pick__button" for="imageFile"><i class="fas fa-upload mr-2"></i>@(hasImage ? "Fotoğrafı değiştir" : "Fotoğraf seç")</label>
+                <span class="file-pick__name" data-file-name>Dosya seçilmedi</span>
+            </div>
+            @Html.ValidationMessage("imageFile")
+            @if (imageLost)
+            {
+                <span class="field-validation-error">Formda hata olduğu için fotoğraf kaydedilmedi; düzelttikten sonra yeniden seç.</span>
+            }
+            <small class="form-text text-muted">İsteğe bağlı. JPG, PNG, WEBP ya da GIF; en fazla 2 MB.</small>
+
+            @if (isUpdate && hasImage)
+            {
+                <div class="custom-control custom-checkbox mt-2">
+                    <input class="custom-control-input" id="removeImage" name="removeImage" type="checkbox" value="true" />
+                    <label class="custom-control-label" for="removeImage">Fotoğrafı kaldır</label>
+                </div>
+            }
+        </div>
+    </div>
+</div>

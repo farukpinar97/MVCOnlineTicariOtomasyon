@@ -1,0 +1,51 @@
+﻿@using MVCOnlineTicariOtomasyon.Models.Entities
+@model List<Personnel>
+
+@{
+    ViewBag.PageTitle = ViewBag.DepartmentName + " departmanı";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="page-bar">
+    <p class="page-bar__info">@Model.Count personel</p>
+    <div class="page-bar__actions">
+        <a class="btn btn-light" href="@Url.Action("Index")"><i class="fas fa-arrow-left mr-2"></i>Departmanlara dön</a>
+    </div>
+</div>
+
+@if (Model.Count == 0)
+{
+    <div class="empty-state">
+        <h2>Bu departmanda personel yok</h2>
+        <p>Personeller sayfasından bir personeli bu departmana ekleyebilirsin.</p>
+        <a class="btn btn-light" href="@Url.Action("Index", "Personnel")">Personellere git</a>
+    </div>
+}
+else
+{
+    @* data-search-item *@
+    <div class="card-grid">
+        @foreach (var item in Model)
+        {
+            // Görsel yoksa ya da yüklenemezse adın ve soyadın baş harfleri görünür
+            var first = string.IsNullOrEmpty(item.PersonnelName) ? "" : item.PersonnelName.Substring(0, 1);
+            var last = string.IsNullOrEmpty(item.PersonnelSurname) ? "" : item.PersonnelSurname.Substring(0, 1);
+            var initials = (first + last).ToUpper();
+
+            <div class="person-card" data-search-item="@item.PersonnelName @item.PersonnelSurname">
+                <span class="thumb thumb--round thumb--lg">
+                    <span>@initials</span>
+                    @if (!string.IsNullOrWhiteSpace(item.PersonnelImage))
+                    {
+                        <img src="@item.PersonnelImage" alt="" loading="lazy" />
+                    }
+                </span>
+                <div class="person-card__body">
+                    <div class="person-card__name">@item.PersonnelName @item.PersonnelSurname</div>
+                    <div class="person-card__meta">Personel no: @item.PersonnelId</div>
+                </div>
+                <a class="btn btn-light" href="@Url.Action("DepartmentPersonnelSales", new { id = item.PersonnelId })"><i class="fas fa-receipt mr-1"></i>Satışlar</a>
+            </div>
+        }
+    </div>
+}

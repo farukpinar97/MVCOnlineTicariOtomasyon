@@ -1,0 +1,325 @@
+﻿@model MVCOnlineTicariOtomasyon.Models.ViewModels.StatisticViewModel
+
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+
+    var tr = new System.Globalization.CultureInfo("tr-TR");
+    // CSS'teki yüzdeler nokta ile yazılmalı
+    var css = System.Globalization.CultureInfo.InvariantCulture;
+
+    // Son 7 gün grafiğinin ölçeği
+    decimal weekTotal = Model.Last7Days.Sum(x => x.Revenue);
+    decimal weekMax = Model.Last7Days.Max(x => x.Revenue);
+
+    // Eksenin tepesi
+    decimal axisMax = 1;
+    if (weekMax > 0)
+    {
+        double power = Math.Pow(10, Math.Floor(Math.Log10((double)weekMax)));
+        double lead = (double)weekMax / power;
+        axisMax = (decimal)((lead <= 1 ? 1 : lead <= 2 ? 2 : lead <= 5 ? 5 : 10) * power);
+    }
+
+    // Cari, personel ve departman sayfaları sadece tam yetkili yöneticiye açık
+    bool fullAccess = MVCOnlineTicariOtomasyon.Filters.AdminAuthorizeAttribute.IsFullAccess(User);
+    Func<string, string> fullLink = controller => fullAccess ? Url.Action("Index", controller) : null;
+
+    // Kategori grafiğinin ölçeği
+    int categoryMax = Model.CategoryRows.Count == 0 ? 1 : Model.CategoryRows.Max(x => x.ProductCount);
+}
+
+<div class="page-bar">
+    <p class="page-bar__info">@Model.Today.ToString("d MMMM yyyy, dddd", tr)</p>
+    <a class="btn btn-primary" href="@Url.Action("SalesAdd", "Sales")"><i class="fas fa-plus mr-2"></i>Satış yap</a>
+</div>
+
+@* Renkli sayı kartları *@
+<div class="stat-tiles">
+    <a class="stat-tile stat-tile--green" href="@Url.Action("Index", "Sales")">
+        <span class="stat-tile__value stat-tile__value--long">@Model.TotalRevenue.ToString("C0", tr)</span>
+        <span class="stat-tile__label">Kasadaki toplam tutar</span>
+        <i class="fas fa-wallet stat-tile__icon" aria-hidden="true"></i>
+        <span class="stat-tile__more">Satışlara git</span>
+    </a>
+    <a class="stat-tile stat-tile--blue" href="@Url.Action("Index", "Sales")">
+        <span class="stat-tile__value">@Model.TotalSalesCount.ToString("N0", tr)</span>
+        <span class="stat-tile__label">Toplam satış</span>
+        <i class="fas fa-receipt stat-tile__icon" aria-hidden="true"></i>
+        <span class="stat-tile__more">Satış listesi</span>
+    </a>
+    <a class="stat-tile stat-tile--amber" href="@Url.Action("Index", "Product")">
+        <span class="stat-tile__value">@Model.ProductCount.ToString("N0", tr)</span>
+        <span class="stat-tile__label">Aktif ürün</span>
+        <i class="fas fa-box-open stat-tile__icon" aria-hidden="true"></i>
+        <span class="stat-tile__more">Ürünlere git</span>
+    </a>
+    <a class="stat-tile stat-tile--plum" href="@fullLink("Current")">
+        <span class="stat-tile__value">@Model.CurrentCount.ToString("N0", tr)</span>
+        <span class="stat-tile__label">Aktif cari</span>
+        <i class="fas fa-address-book stat-tile__icon" aria-hidden="true"></i>
+        <span class="stat-tile__more">Carilere git</span>
+    </a>
+</div>
+
+<div class="dash-top">
+
+    @* Günün rakamı *@
+    <section class="hero">
+        <div class="hero__label">Bugünkü kasa</div>
+        <div class="hero__value">@Model.TodayRevenue.ToString("C2", tr)</div>
+        <p class="hero__note">
+            @if (Model.TodaySalesCount == 0)
+            {
+                <span>Bugün henüz satış yok.</span>
+            }
+            else
+            {
+                <span>Bugün @Model.TodaySalesCount satış yapıldı.</span>
+            }
+        </p>
+    </section>
+
+    @* Sütun grafik *@
+    <figure class="chart">
+        <figcaption>
+            <div class="chart__title">Son 7 günün satışları</div>
+            <div class="chart__sub">Günlük toplam (₺). 7 günün toplamı @weekTotal.ToString("C2", tr)</div>
+        </figcaption>
+
+        @if (weekMax == 0)
+        {
+            <p class="chart__empty">Son 7 günde satış yok.</p>
+        }
+        else
+        {
+            <div class="cols">
+                <div class="cols__plot">
+                    <div class="cols__grid" style="bottom:100%"><span>@axisMax.ToString("N0", tr)</span></div>
+                    <div class="cols__grid" style="bottom:50%"><span>@((axisMax / 2).ToString("N0", tr))</span></div>
+                    <ol class="cols__bars">
+                        @foreach (var day in Model.Last7Days)
+                        {
+                            var height = (day.Revenue / axisMax * 100).ToString("0.##", css);
+                            var isToday = day.Date == Model.Today;
+                            var tipLabel = day.Date.ToString("d MMMM dddd", tr) + ", " + day.Count + " satış";
+
+                            <li tabindex="0" data-tip-value="@day.Revenue.ToString("C2", tr)" data-tip-label="@tipLabel">
+                                <span class="cols__bar" style="height:@height%">
+                                    @* Sadece en yüksek günün değeri sütunun üstüne yazılır *@
+                                    @if (day.Revenue == weekMax)
+                                    {
+                                        <span class="cols__cap">@day.Revenue.ToString("C0", tr)</span>
+                                    }
+                                </span>
+                                <span class="cols__label">@(isToday ? "Bugün" : day.Date.ToString("ddd", tr))</span>
+                            </li>
+                        }
+                    </ol>
+                </div>
+            </div>
+
+            @* Grafiğin tablo hali *@
+            <details class="chart__table">
+                <summary>Tablo olarak göster</summary>
+                <table class="table table-sm" data-admin="off">
+                    <thead>
+                        <tr>
+                            <th>Gün</th>
+                            <th class="cell-num">Satış</th>
+                            <th class="cell-num">Tutar</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var day in Model.Last7Days)
+                        {
+                            <tr>
+                                <td>@day.Date.ToString("d MMMM dddd", tr)</td>
+                                <td class="cell-num">@day.Count</td>
+                                <td class="cell-num">@day.Revenue.ToString("C2", tr)</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </details>
+        }
+    </figure>
+
+</div>
+
+@* Ürün ve stok *@
+<div class="section-head">
+    <h2>Ürün ve stok</h2>
+    <a href="@Url.Action("Index", "Product")">Ürünlere git</a>
+</div>
+<div class="info-tiles">
+    <div class="info-tile info-tile--teal">
+        <span class="info-tile__icon" aria-hidden="true"><i class="fas fa-cubes"></i></span>
+        <div class="info-tile__body">
+            <span class="info-tile__label">Stoktaki toplam adet</span>
+            <span class="info-tile__value">@Model.TotalStock.ToString("N0", tr)</span>
+        </div>
+    </div>
+    <div class="info-tile @(Model.LowStockCount > 0 ? "info-tile--warning" : "info-tile--green")">
+        <span class="info-tile__icon" aria-hidden="true"><i class="fas @(Model.LowStockCount > 0 ? "fa-exclamation-triangle" : "fa-check")"></i></span>
+        <div class="info-tile__body">
+            <span class="info-tile__label">Stoku @Model.LowStockLimit ve altında olan</span>
+            <span class="info-tile__value">@Model.LowStockCount ürün</span>
+            @if (Model.LowStockCount == 0)
+            {
+                <span class="info-tile__note">Stoklar yeterli</span>
+            }
+        </div>
+    </div>
+    <div class="info-tile info-tile--blue">
+        <span class="info-tile__icon" aria-hidden="true"><i class="fas fa-trophy"></i></span>
+        <div class="info-tile__body">
+            <span class="info-tile__label">En çok satan ürün</span>
+            @if (Model.BestSellerName == null)
+            {
+                <span class="info-tile__value is-text">Henüz satış yok</span>
+            }
+            else
+            {
+                <span class="info-tile__value is-text">@Model.BestSellerName</span>
+                <span class="info-tile__note">@Model.BestSellerQuantity adet satıldı</span>
+            }
+        </div>
+    </div>
+    <div class="info-tile info-tile--plum">
+        <span class="info-tile__icon" aria-hidden="true"><i class="fas fa-copyright"></i></span>
+        <div class="info-tile__body">
+            <span class="info-tile__label">Marka</span>
+            <span class="info-tile__value">@Model.BrandCount.ToString("N0", tr)</span>
+        </div>
+    </div>
+    <div class="info-tile info-tile--rose">
+        <span class="info-tile__icon" aria-hidden="true"><i class="fas fa-gem"></i></span>
+        <div class="info-tile__body">
+            <span class="info-tile__label">En pahalı ürün</span>
+            @if (Model.MostExpensiveName == null)
+            {
+                <span class="info-tile__value is-text">Ürün yok</span>
+            }
+            else
+            {
+                <span class="info-tile__value is-text">@Model.MostExpensiveName</span>
+                <span class="info-tile__note">@Model.MostExpensivePrice.ToString("C2", tr)</span>
+            }
+        </div>
+    </div>
+    <div class="info-tile info-tile--green">
+        <span class="info-tile__icon" aria-hidden="true"><i class="fas fa-tag"></i></span>
+        <div class="info-tile__body">
+            <span class="info-tile__label">En ucuz ürün</span>
+            @if (Model.CheapestName == null)
+            {
+                <span class="info-tile__value is-text">Ürün yok</span>
+            }
+            else
+            {
+                <span class="info-tile__value is-text">@Model.CheapestName</span>
+                <span class="info-tile__note">@Model.CheapestPrice.ToString("C2", tr)</span>
+            }
+        </div>
+    </div>
+    <div class="info-tile info-tile--amber">
+        <span class="info-tile__icon" aria-hidden="true"><i class="fas fa-crown"></i></span>
+        <div class="info-tile__body">
+            <span class="info-tile__label">En çok ürünü olan marka</span>
+            @if (Model.TopBrandName == null)
+            {
+                <span class="info-tile__value is-text">Marka girilmemiş</span>
+            }
+            else
+            {
+                <span class="info-tile__value is-text">@Model.TopBrandName</span>
+                <span class="info-tile__note">@Model.TopBrandProductCount ürün</span>
+            }
+        </div>
+    </div>
+    <div class="info-tile info-tile--teal">
+        <span class="info-tile__icon" aria-hidden="true"><i class="fas fa-cash-register"></i></span>
+        <div class="info-tile__body">
+            <span class="info-tile__label">Bugünkü satış</span>
+            <span class="info-tile__value">@Model.TodaySalesCount.ToString("N0", tr)</span>
+            <span class="info-tile__note">@Model.TodayRevenue.ToString("C2", tr)</span>
+        </div>
+    </div>
+</div>
+
+<div class="dash-bottom">
+
+    @* Yatay çubuklar *@
+    <figure class="chart">
+        <figcaption>
+            <div class="chart__title">Kategorilere göre ürün sayısı</div>
+            @if (Model.CategoryRows.Count > 0)
+            {
+                <div class="chart__sub">Aktif ürünler. En çok ürünü olan @Model.CategoryRows.Count kategori.</div>
+            }
+        </figcaption>
+
+        @if (Model.CategoryRows.Count == 0)
+        {
+            <p class="chart__empty">Henüz ürün yok.</p>
+        }
+        else
+        {
+            <ol class="bars">
+                @foreach (var row in Model.CategoryRows)
+                {
+                    var ratio = ((decimal)row.ProductCount / categoryMax).ToString("0.###", css);
+
+                    <li>
+                        <span class="bars__name" title="@row.Name">@row.Name</span>
+                        <span class="bars__track">
+                            <span class="bars__fill" style="width:calc((100% - 3rem) * @ratio)"></span>
+                            <span class="bars__value">@row.ProductCount</span>
+                        </span>
+                    </li>
+                }
+            </ol>
+        }
+    </figure>
+
+    <div>
+        <div class="section-head section-head--flush">
+            <h2>Genel</h2>
+        </div>
+        <div class="info-tiles info-tiles--stack">
+            <a class="info-tile info-tile--link info-tile--plum" href="@fullLink("Current")">
+                <span class="info-tile__icon" aria-hidden="true"><i class="fas fa-address-book"></i></span>
+                <div class="info-tile__body">
+                    <span class="info-tile__label">Cari</span>
+                    <span class="info-tile__value">@Model.CurrentCount.ToString("N0", tr)</span>
+                </div>
+                <i class="fas fa-chevron-right info-tile__arrow" aria-hidden="true"></i>
+            </a>
+            <a class="info-tile info-tile--link info-tile--blue" href="@fullLink("Personnel")">
+                <span class="info-tile__icon" aria-hidden="true"><i class="fas fa-user-tie"></i></span>
+                <div class="info-tile__body">
+                    <span class="info-tile__label">Personel</span>
+                    <span class="info-tile__value">@Model.PersonnelCount.ToString("N0", tr)</span>
+                </div>
+                <i class="fas fa-chevron-right info-tile__arrow" aria-hidden="true"></i>
+            </a>
+            <a class="info-tile info-tile--link info-tile--amber" href="@Url.Action("Index", "Category")">
+                <span class="info-tile__icon" aria-hidden="true"><i class="fas fa-tags"></i></span>
+                <div class="info-tile__body">
+                    <span class="info-tile__label">Kategori</span>
+                    <span class="info-tile__value">@Model.CategoryCount.ToString("N0", tr)</span>
+                </div>
+                <i class="fas fa-chevron-right info-tile__arrow" aria-hidden="true"></i>
+            </a>
+            <a class="info-tile info-tile--link info-tile--teal" href="@fullLink("Department")">
+                <span class="info-tile__icon" aria-hidden="true"><i class="fas fa-sitemap"></i></span>
+                <div class="info-tile__body">
+                    <span class="info-tile__label">Departman</span>
+                    <span class="info-tile__value">@Model.DepartmentCount.ToString("N0", tr)</span>
+                </div>
+                <i class="fas fa-chevron-right info-tile__arrow" aria-hidden="true"></i>
+            </a>
+        </div>
+    </div>
+
+</div>

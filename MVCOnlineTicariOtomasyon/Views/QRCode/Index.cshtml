@@ -1,0 +1,85 @@
+﻿@using MVCOnlineTicariOtomasyon.Models.Entities
+
+@{
+    ViewBag.PageTitle = "QR kod";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+
+    var tr = new System.Globalization.CultureInfo("tr-TR");
+    string qrText = ViewBag.Code;   // QR koda yazılacak metin
+    var cargo = ViewBag.Cargo as CargoDetail;
+    var recentCodes = (List<string>)ViewBag.RecentCodes;
+    bool hasError = !ViewData.ModelState.IsValidField("code");
+    bool showQr = !String.IsNullOrEmpty(qrText) && !hasError;
+}
+
+<div class="qr-layout">
+
+    @* Sol *@
+    <section class="card qr-form">
+        <div class="card-body">
+            <form method="get" action="@Url.Action("Index")">
+                <label for="code">Takip kodu</label>
+                <div class="qr-form__row">
+                    <input class="form-control qr-form__input @(hasError ? "input-validation-error" : null)" id="code" name="code" type="text" value="@qrText"
+                           maxlength="100" required autocomplete="off" spellcheck="false" autofocus placeholder="Ör. K7M2PH9ZTA" />
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-qrcode mr-2"></i>Oluştur</button>
+                </div>
+                @Html.ValidationMessage("code")
+                <small class="form-text text-muted">Kargonun takip kodunu yaz. Başka bir metin de yazabilirsin, o da QR koda dönüşür.</small>
+            </form>
+
+            @if (recentCodes.Count > 0)
+            {
+                <div class="qr-recent">
+                    <span class="qr-recent__label">Son kargolar</span>
+                    <div class="status-chips">
+                        @foreach (var item in recentCodes)
+                        {
+                            <a class="status-chip cargo-code @(item == qrText ? "is-active" : null)" href="@Url.Action("Index", new { code = item })">@item</a>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </section>
+
+    @* Sağ *@
+    <section class="card qr-result">
+        @if (showQr)
+        {
+            <figure class="qr-result__figure">
+                <img class="qr-result__image" src="@Url.Action("Image", new { text = qrText })" alt="@qrText için QR kod" width="240" height="240" />
+                <figcaption class="cargo-code cargo-code--lg">@qrText</figcaption>
+            </figure>
+
+            if (cargo != null)
+            {
+                <dl class="qr-result__facts">
+                    <div><dt>Alıcı</dt><dd>@cargo.Receiver</dd></div>
+                    <div><dt>Gönderim</dt><dd>@cargo.Date.ToString("d MMMM yyyy, HH:mm", tr)</dd></div>
+                </dl>
+            }
+            else
+            {
+                <p class="qr-result__note">Bu metin bir kargonun takip kodu değil; QR kod yine de oluşturuldu.</p>
+            }
+
+            <div class="qr-result__actions">
+                <a class="btn btn-light" href="@Url.Action("Image", new { text = qrText, download = true })"><i class="fas fa-download mr-2"></i>PNG indir</a>
+                <button type="button" class="btn btn-light" onclick="window.print()"><i class="fas fa-print mr-2"></i>Yazdır</button>
+                @if (cargo != null)
+                {
+                    <a class="btn btn-light" href="@Url.Action("CargoTrack", "Cargo", new { id = cargo.TrackingCode })"><i class="fas fa-route mr-2"></i>Kargo takibi</a>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="qr-result__empty">
+                <i class="fas fa-qrcode" aria-hidden="true"></i>
+                <p>Takip kodunu yazınca QR kodu burada görünür.</p>
+            </div>
+        }
+    </section>
+
+</div>

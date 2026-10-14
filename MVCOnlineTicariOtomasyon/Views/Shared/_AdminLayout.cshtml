@@ -1,0 +1,214 @@
+﻿@* Admin paneli ana şablonu *@
+@{
+    Layout = null;
+
+    // Menü tek yerden yönetiliyor
+    var menu = new[]
+    {
+        new { Group = "Genel",   Text = "İstatistikler", Controller = "Statistic", Icon = "fa-chart-line", FullOnly = false },
+        new { Group = "Genel",   Text = "Grafikler",    Controller = "Chart",      Icon = "fa-chart-pie", FullOnly = false },
+        new { Group = "Genel",   Text = "Hızlı bakış",  Controller = "QuickView",  Icon = "fa-table", FullOnly = false },
+        new { Group = "Genel",   Text = "Yapılacaklar", Controller = "ToDoList",   Icon = "fa-tasks", FullOnly = false },
+        new { Group = "Katalog", Text = "Kategoriler",  Controller = "Category",   Icon = "fa-tags", FullOnly = false },
+        new { Group = "Katalog", Text = "Ürünler",      Controller = "Product",    Icon = "fa-box-open", FullOnly = false },
+        new { Group = "Katalog", Text = "Galeri",       Controller = "Gallery",    Icon = "fa-images", FullOnly = false },
+        new { Group = "Satış",   Text = "Satışlar",     Controller = "Sales",      Icon = "fa-cash-register", FullOnly = false },
+        new { Group = "Satış",   Text = "Faturalar",    Controller = "Invoice",    Icon = "fa-file-invoice", FullOnly = false },
+        new { Group = "Satış",   Text = "Kargolar",     Controller = "Cargo",      Icon = "fa-truck", FullOnly = false },
+        new { Group = "Satış",   Text = "QR kod",       Controller = "QRCode",     Icon = "fa-qrcode", FullOnly = false },
+        new { Group = "Satış",   Text = "Cariler",      Controller = "Current",    Icon = "fa-address-book", FullOnly = true  },
+        new { Group = "Şirket",  Text = "Departmanlar", Controller = "Department", Icon = "fa-sitemap", FullOnly = true  },
+        new { Group = "Şirket",  Text = "Personeller",  Controller = "Personnel",  Icon = "fa-user-tie", FullOnly = true  }
+    };
+
+    // Rol
+    string authority = MVCOnlineTicariOtomasyon.Filters.AdminAuthorizeAttribute.AuthorityOf(User);
+    bool fullAccess = authority == MVCOnlineTicariOtomasyon.Filters.AdminAuthorizeAttribute.FullAccess;
+    menu = menu.Where(m => fullAccess || !m.FullOnly).ToArray();
+
+    // Seçili menü
+    var currentController = (ViewBag.ActiveMenu as string) ?? ViewContext.RouteData.GetRequiredString("controller");
+    var activeItem = menu.FirstOrDefault(m => string.Equals(m.Controller, currentController, StringComparison.OrdinalIgnoreCase));
+
+    // Üst çubuktaki başlık
+    string pageTitle = (ViewBag.PageTitle as string) ?? (activeItem != null ? activeItem.Text : "Yönetim Paneli");
+
+    // Giriş yapan yöneticinin kullanıcı adı
+    string userName = string.IsNullOrEmpty(User.Identity.Name) ? "Yönetici" : User.Identity.Name;
+    string userInitial = userName.Substring(0, 1).ToUpper();
+
+    // İşlem sonrası mesaj normalde içeriğin üstünde bir şerit olarak çıkar
+    bool flashAsToast = ViewBag.FlashAsToast == true;
+
+    // Tema dosyalarının adresine dosyanın son değişme zamanı eklenir
+    Func<string, string> versioned = path =>
+        Url.Content(path) + "?v=" + System.IO.File.GetLastWriteTimeUtc(Server.MapPath(path)).Ticks;
+}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@pageTitle - Ticari Otomasyon</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=IBM+Plex+Sans:400,500,600%7CIBM+Plex+Sans+Condensed:600%7CIBM+Plex+Mono:600&amp;subset=latin-ext&amp;display=swap" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.2/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="@versioned("~/Content/admin/admin.css")" />
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js"></script>
+
+    <script>
+        // Yan menü tercihi sayfa çizilmeden uygulanır ki açılışta zıplama olmasın
+        try {
+            if (localStorage.getItem('to.sidebar') === 'collapsed') {
+                document.documentElement.classList.add('sidebar-collapsed');
+            }
+        } catch (e) { }
+    </script>
+
+    @RenderSection("head", required: false)
+</head>
+<body>
+    <div class="app">
+
+        <aside class="app-sidebar" id="sidebar">
+            <a class="app-brand" href="@Url.Action("Index", "Statistic")">
+                <span class="app-brand__mark" aria-hidden="true">
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <path d="M6 2v14M2 7h14M2 12h14" />
+                    </svg>
+                </span>
+                <span class="app-brand__text">
+                    <span class="app-brand__name">Ticari Otomasyon</span>
+                    <span class="app-brand__sub">Yönetim paneli</span>
+                </span>
+            </a>
+
+            <nav class="app-nav" aria-label="Ana menü">
+                @foreach (var group in menu.GroupBy(m => m.Group))
+                {
+                    <div class="app-nav__group">@group.Key</div>
+
+                    foreach (var item in group)
+                    {
+                        var isActive = activeItem != null && item.Controller == activeItem.Controller;
+
+                        <a class="app-nav__link @(isActive ? "is-active" : null)"
+                           href="@Url.Action("Index", item.Controller)"
+                           title="@item.Text"
+                           aria-current="@(isActive ? "page" : null)">
+                            <span class="app-nav__icon"><i class="fas @item.Icon"></i></span>
+                            <span class="app-nav__label">@item.Text</span>
+                        </a>
+                    }
+                }
+            </nav>
+        </aside>
+
+        <div class="app-overlay"></div>
+
+        <div class="app-main">
+
+            <header class="app-topbar">
+                <button class="app-iconbtn" id="sidebarToggle" type="button" aria-label="Menüyü aç veya kapat" aria-controls="sidebar">
+                    <i class="fas fa-bars"></i>
+                </button>
+
+                <h1 class="app-topbar__title">@pageTitle</h1>
+
+                <div class="app-topbar__spacer"></div>
+
+                @* Sayfada tablo varsa admin.js bu kutuyu görünür yapar ve satırları süzer *@
+                <div class="app-search" hidden>
+                    <i class="fas fa-search app-search__icon"></i>
+                    <input class="app-search__input" id="tableSearch" type="search" placeholder="Bu sayfada ara" aria-label="Bu sayfadaki tabloda ara" autocomplete="off" />
+                    <span class="app-search__key" aria-hidden="true">/</span>
+                </div>
+
+                <div class="dropdown">
+                    <button class="app-user dropdown-toggle" id="userMenu" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <span class="app-user__avatar" aria-hidden="true">@userInitial</span>
+                        <span class="app-user__name">@userName</span>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-right" aria-labelledby="userMenu">
+                        <div class="dropdown-item-text user-role">
+                            <span class="user-role__badge @(fullAccess ? "is-full" : null)">@(fullAccess ? "A" : "B")</span>
+                            <span>@MVCOnlineTicariOtomasyon.Filters.AdminAuthorizeAttribute.AuthorityName(authority)</span>
+                        </div>
+                        <div class="dropdown-divider"></div>
+                        @* Çıkış POST ile yapılır *@
+                        <form class="m-0" method="post" action="@Url.Action("Logout", "Login")">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="dropdown-item"><i class="fas fa-sign-out-alt fa-fw mr-2"></i>Çıkış yap</button>
+                        </form>
+                    </div>
+                </div>
+            </header>
+
+            <main class="app-content">
+                <div class="app-content__inner">
+
+                    @* İşlem sonrası bildirimler *@
+                    @if (flashAsToast)
+                    {
+                        if (TempData["Success"] != null)
+                        {
+                            <div hidden data-swal-flash="success">@TempData["Success"]</div>
+                        }
+                        if (TempData["Error"] != null)
+                        {
+                            <div hidden data-swal-flash="error">@TempData["Error"]</div>
+                        }
+                    }
+                    else
+                    {
+                        if (TempData["Success"] != null)
+                        {
+                            <div class="alert alert-success alert-dismissible app-flash" role="status">
+                                <i class="fas fa-check-circle mr-2"></i>@TempData["Success"]
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Kapat"><span aria-hidden="true">&times;</span></button>
+                            </div>
+                        }
+                        if (TempData["Error"] != null)
+                        {
+                            <div class="alert alert-danger alert-dismissible app-flash" role="alert">
+                                <i class="fas fa-exclamation-circle mr-2"></i>@TempData["Error"]
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Kapat"><span aria-hidden="true">&times;</span></button>
+                            </div>
+                        }
+                    }
+
+                    @RenderBody()
+                </div>
+            </main>
+
+            <footer class="app-footer">&copy; @DateTime.Now.Year Ticari Otomasyon</footer>
+
+        </div>
+    </div>
+
+    @* Silme onayı penceresi *@
+    <div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <form class="modal-content" method="post" action="#">
+                @Html.AntiForgeryToken()
+                <div class="modal-header">
+                    <h2 class="modal-title" id="deleteModalTitle">Kayıt silinsin mi?</h2>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Kapat"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <div class="modal-body">Bu işlem geri alınamaz.</div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-dismiss="modal">Vazgeç</button>
+                    <button type="submit" class="btn btn-danger">Sil</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.2/js/bootstrap.bundle.min.js"></script>
+    <script src="@versioned("~/Content/admin/admin.js")"></script>
+    @RenderSection("scripts", required: false)
+</body>
+</html>

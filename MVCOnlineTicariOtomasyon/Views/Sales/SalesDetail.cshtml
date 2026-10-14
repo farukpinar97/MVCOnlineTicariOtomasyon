@@ -1,0 +1,95 @@
+﻿@model MVCOnlineTicariOtomasyon.Models.Entities.SalesTransaction
+
+@{
+    ViewBag.PageTitle = "Satış fişi";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+
+    var tr = new System.Globalization.CultureInfo("tr-TR");
+}
+
+@* Yazdırırken sadece aşağıdaki fiş kağıda çıkar *@
+<div class="page-bar">
+    <p class="page-bar__info">Satış no @Model.SalesTransactionId</p>
+    <div class="page-bar__actions">
+        <a class="btn btn-light" href="@Url.Action("Index")"><i class="fas fa-arrow-left mr-2"></i>Satışlara dön</a>
+        <a class="btn btn-light" href="@Url.Action("SalesGet", new { id = Model.SalesTransactionId })"><i class="fas fa-pen mr-2"></i>Güncelle</a>
+        <button type="button" class="btn btn-primary" onclick="window.print()"><i class="fas fa-print mr-2"></i>Yazdır</button>
+    </div>
+</div>
+
+<article class="receipt">
+    <header class="receipt__head">
+        <div>
+            <div class="receipt__brand">Ticari Otomasyon</div>
+            <h2 class="receipt__title">Satış fişi</h2>
+        </div>
+        <dl class="receipt__meta">
+            <div>
+                <dt>Fiş no</dt>
+                <dd>@Model.SalesTransactionId</dd>
+            </div>
+            <div>
+                <dt>Tarih</dt>
+                <dd>@Model.SalesTransactionDate.ToString("dd.MM.yyyy", tr)</dd>
+            </div>
+        </dl>
+    </header>
+
+    <div class="receipt__parties">
+        <div>
+            <h3>Cari</h3>
+            <div class="receipt__name">@Model.Current.CurrentName @Model.Current.CurrentSurname</div>
+            @if (!String.IsNullOrWhiteSpace(Model.Current.CurrentCity))
+            {
+                <div>@Model.Current.CurrentCity</div>
+            }
+            @if (!String.IsNullOrWhiteSpace(Model.Current.CurrentMail))
+            {
+                <div>@Model.Current.CurrentMail</div>
+            }
+        </div>
+        <div>
+            <h3>Satışı yapan</h3>
+            <div class="receipt__name">@Model.Personnel.PersonnelName @Model.Personnel.PersonnelSurname</div>
+            @if (Model.Personnel.Department != null)
+            {
+                <div>@Model.Personnel.Department.DepartmentName</div>
+            }
+        </div>
+    </div>
+
+    @* data-admin="off" *@
+    <table class="table" data-admin="off">
+        <thead>
+            <tr>
+                <th>Ürün</th>
+                <th class="cell-fit cell-num">Adet</th>
+                <th class="cell-fit cell-num">Birim fiyat</th>
+                <th class="cell-fit cell-num">Tutar</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>
+                    <div class="product-cell__name">@Model.Product.ProductName</div>
+                    <div class="product-cell__brand">
+                        @Model.Product.Brand
+                        @if (Model.Product.Category != null)
+                        {
+                            <span>(@Model.Product.Category.CategoryName)</span>
+                        }
+                    </div>
+                </td>
+                <td class="cell-num">@Model.SalesTransactionQuantity</td>
+                <td class="cell-fit cell-num">@Model.SalesTransactionUnitPrice.ToString("C2", tr)</td>
+                <td class="cell-fit cell-num">@Model.SalesTransactionTotalPrice.ToString("C2", tr)</td>
+            </tr>
+        </tbody>
+        <tfoot>
+            <tr>
+                <th colspan="3">Toplam</th>
+                <td class="cell-fit cell-num">@Model.SalesTransactionTotalPrice.ToString("C2", tr)</td>
+            </tr>
+        </tfoot>
+    </table>
+</article>

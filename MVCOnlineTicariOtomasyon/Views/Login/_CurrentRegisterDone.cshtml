@@ -1,0 +1,18 @@
+﻿@model MVCOnlineTicariOtomasyon.Models.Entities.Current
+
+@* Kayıt başarılı olunca kayıt penceresinin içine bu yerleşir *@
+
+<div class="modal-header">
+    <h2 class="modal-title" id="registerTitle">Kaydın oluşturuldu</h2>
+    <button type="button" class="close" data-dismiss="modal" aria-label="Kapat"><span aria-hidden="true">&times;</span></button>
+</div>
+
+<div class="modal-body register-done" data-register-done>
+    <span class="register-done__icon" aria-hidden="true"><i class="fas fa-check"></i></span>
+    <p class="register-done__text">Hoş geldin, @Model.CurrentName.</p>
+    <p class="register-done__note">Giriş yaparken <strong>@Model.CurrentMail</strong> adresini ve belirlediğin şifreyi kullanacaksın.</p>
+</div>
+
+<div class="modal-footer">
+    <button type="button" class="btn btn-primary" data-dismiss="modal">Tamam</button>
+</div>

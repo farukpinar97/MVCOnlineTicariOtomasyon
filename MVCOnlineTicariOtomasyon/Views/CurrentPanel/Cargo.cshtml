@@ -1,0 +1,178 @@
+﻿@using MVCOnlineTicariOtomasyon.Controllers
+@using MVCOnlineTicariOtomasyon.Models.ViewModels
+@model CargoTrackViewModel
+
+@{
+    Layout = "~/Views/Shared/_CurrentLayout.cshtml";
+
+    var tr = new System.Globalization.CultureInfo("tr-TR");
+    string code = ViewBag.Code;
+    var myCargoes = (List<CargoListItem>)ViewBag.MyCargoes;
+    bool hasError = !ViewData.ModelState.IsValidField("code");
+
+    // İlerleme çubuğunun adımları
+    var steps = new List<string> { "Kayıt oluşturuldu" };
+    steps.AddRange(CurrentPanelController.CargoSteps);
+    int stage = Model == null ? 0 : (int)ViewBag.Stage;
+    var last = Model != null && Model.Statuses.Count > 0 ? Model.Statuses[0] : null;
+}
+
+@* Takip kodu ile sorgulama *@
+<section class="track-search">
+    <div class="track-search__text">
+        <h2 class="track-search__title">Kargon nerede?</h2>
+        <p class="track-search__lead">Sana verilen 10 haneli takip kodunu yaz, kargonun bütün hareketlerini gör.</p>
+    </div>
+    <form class="track-search__form" method="get" action="@Url.Action("Cargo")" role="search">
+        <label class="sr-only" for="code">Takip kodu</label>
+        <div class="track-search__field">
+            <i class="fas fa-barcode track-search__icon" aria-hidden="true"></i>
+            <input class="form-control track-search__input @(hasError ? "input-validation-error" : null)" id="code" name="code" type="text" value="@code"
+                   maxlength="10" required autocomplete="off" spellcheck="false" placeholder="Ör. K7M2PH9ZTA" />
+        </div>
+        <button type="submit" class="btn btn-amber"><i class="fas fa-search mr-2" aria-hidden="true"></i>Sorgula</button>
+        @Html.ValidationMessage("code", new { @class = "track-search__error" })
+    </form>
+</section>
+
+@if (Model != null)
+{
+    var cargo = Model.Cargo;
+
+    <section class="card track-result">
+        <header class="track-result__head">
+            <div>
+                <span class="cargo-code-box__label">Takip kodu</span>
+                <span class="cargo-code cargo-code--lg">@cargo.TrackingCode</span>
+            </div>
+            @if (Model.IsDelivered)
+            {
+                <span class="cargo-pill is-delivered"><i class="fas fa-check mr-1" aria-hidden="true"></i>Teslim edildi</span>
+            }
+            else if (last != null)
+            {
+                <span class="cargo-pill"><i class="fas fa-truck mr-1" aria-hidden="true"></i>@last.Description</span>
+            }
+        </header>
+
+        @* İlerleme *@
+        <ol class="stepper @(Model.IsDelivered ? "is-done" : null)" aria-label="Kargonun ilerleyişi">
+            @for (int i = 0; i < steps.Count; i++)
+            {
+                string state = i < stage ? "is-past" : i == stage ? "is-current" : null;
+                <li class="stepper__step @state" aria-current="@(i == stage ? "step" : null)">
+                    <span class="stepper__dot" aria-hidden="true">
+                        @if (i < stage || (i == stage && Model.IsDelivered))
+                        {
+                            <i class="fas fa-check"></i>
+                        }
+                    </span>
+                    <span class="stepper__label">@steps[i]</span>
+                </li>
+            }
+        </ol>
+
+        <div class="track-result__body">
+            <dl class="cargo-facts track-result__facts">
+                <div>
+                    <dt>Alıcı</dt>
+                    <dd>@cargo.Receiver</dd>
+                </div>
+                <div>
+                    <dt>Gönderim tarihi</dt>
+                    <dd>@cargo.Date.ToString("d MMMM yyyy, HH:mm", tr)</dd>
+                </div>
+                <div>
+                    <dt>Açıklama</dt>
+                    <dd>@(String.IsNullOrWhiteSpace(cargo.Description) ? "–" : cargo.Description)</dd>
+                </div>
+                @if (last != null)
+                {
+                    <div>
+                        <dt>Son hareket</dt>
+                        <dd>@last.Date.ToString("d MMMM yyyy, HH:mm", tr)</dd>
+                    </div>
+                }
+            </dl>
+
+            <div class="track-result__history">
+                <h3 class="track-result__subtitle">Kargo hareketleri</h3>
+                @if (Model.Statuses.Count == 0)
+                {
+                    <p class="cargo-card__empty">Bu kargo için henüz hareket girilmedi.</p>
+                }
+                else
+                {
+                    <ol class="track track--plain">
+                        @for (int i = 0; i < Model.Statuses.Count; i++)
+                        {
+                            var s = Model.Statuses[i];
+                            bool delivered = CargoController.IsDeliveredText(s.Description);
+
+                            <li class="track__item @(i == 0 ? "is-current" : null) @(delivered ? "is-delivered" : null)">
+                                <span class="track__dot" aria-hidden="true"></span>
+                                <div class="track__body">
+                                    <div class="track__text">
+                                        @s.Description
+                                        @if (i == 0)
+                                        {
+                                            <span class="track__now">Şu anki durum</span>
+                                        }
+                                    </div>
+                                    <time class="track__date" datetime="@s.Date.ToString("s")">@s.Date.ToString("d MMMM yyyy, dddd HH:mm", tr)</time>
+                                </div>
+                            </li>
+                        }
+                    </ol>
+                }
+            </div>
+        </div>
+    </section>
+}
+
+@* Adına kayıtlı kargolar *@
+<section class="card cp-card">
+    <div class="card-header cp-card__head">
+        <div>
+            <h2 class="cp-card__title">Adına kayıtlı kargolar</h2>
+            <span class="cp-card__desc">Alıcı adı senin adınla aynı olan son 10 kargo.</span>
+        </div>
+    </div>
+
+    @if (myCargoes.Count == 0)
+    {
+        <p class="cp-card__empty">Adına kayıtlı kargo yok. Takip kodun varsa yukarıdan sorgulayabilirsin.</p>
+    }
+    else
+    {
+        <ul class="order-list">
+            @foreach (var item in myCargoes)
+            {
+                var c = item.Cargo;
+                bool isOpen = Model != null && Model.Cargo.TrackingCode == c.TrackingCode;
+
+                <li>
+                    <a class="cargo-row @(isOpen ? "is-open" : null)" href="@Url.Action("Cargo", new { code = c.TrackingCode })">
+                        <span class="thumb"><i class="fas fa-box" aria-hidden="true"></i></span>
+                        <span class="cargo-row__main">
+                            <span class="cargo-code">@c.TrackingCode</span>
+                            <span class="cargo-row__meta">@c.Date.ToString("d MMMM yyyy", tr)@(String.IsNullOrWhiteSpace(c.Description) ? "" : " · " + c.Description)</span>
+                        </span>
+                        @if (item.LastStatus == null)
+                        {
+                            <span class="badge badge-light">Durum girilmedi</span>
+                        }
+                        else
+                        {
+                            <span class="cargo-status @(item.IsDelivered ? "is-delivered" : null)">
+                                <span class="cargo-status__text">@item.LastStatus.Description</span>
+                                <span class="cargo-status__date">@item.LastStatus.Date.ToString("d MMMM, HH:mm", tr)</span>
+                            </span>
+                        }
+                        <i class="fas fa-chevron-right cargo-row__arrow" aria-hidden="true"></i>
+                    </a>
+                </li>
+            }
+        </ul>
+    }
+</section>

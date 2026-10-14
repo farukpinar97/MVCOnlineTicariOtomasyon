@@ -1,0 +1,31 @@
+﻿@model MVCOnlineTicariOtomasyon.Models.Entities.Current
+
+@* Cari formunun alanları *@
+
+<div class="form-row">
+    <div class="form-group col-md-6">
+        @Html.LabelFor(x => x.CurrentName)
+        @Html.TextBoxFor(x => x.CurrentName, new { @class = "form-control", maxlength = 30, required = "required", autofocus = "autofocus", autocomplete = "off" })
+        @Html.ValidationMessageFor(x => x.CurrentName)
+    </div>
+    <div class="form-group col-md-6">
+        @Html.LabelFor(x => x.CurrentSurname)
+        @Html.TextBoxFor(x => x.CurrentSurname, new { @class = "form-control", maxlength = 30, required = "required", autocomplete = "off" })
+        @Html.ValidationMessageFor(x => x.CurrentSurname)
+    </div>
+</div>
+
+<div class="form-row">
+    <div class="form-group col-md-6 mb-md-0">
+        @Html.LabelFor(x => x.CurrentCity)
+        @Html.TextBoxFor(x => x.CurrentCity, new { @class = "form-control", maxlength = 13, autocomplete = "off" })
+        @Html.ValidationMessageFor(x => x.CurrentCity)
+        <small class="form-text text-muted">İsteğe bağlı. En fazla 13 karakter.</small>
+    </div>
+    <div class="form-group col-md-6 mb-0">
+        @Html.LabelFor(x => x.CurrentMail)
+        @Html.TextBoxFor(x => x.CurrentMail, new { @class = "form-control", type = "email", maxlength = 50, autocomplete = "off" })
+        @Html.ValidationMessageFor(x => x.CurrentMail)
+        <small class="form-text text-muted">İsteğe bağlı.</small>
+    </div>
+</div>

@@ -1,0 +1,96 @@
+﻿@using MVCOnlineTicariOtomasyon.Models.ViewModels
+@model List<CargoListItem>
+
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+
+    var tr = new System.Globalization.CultureInfo("tr-TR");
+    var today = DateTime.Today;
+
+    // Özet bandı
+    int deliveredCount = Model.Count(x => x.IsDelivered);
+    int onTheWayCount = Model.Count - deliveredCount;
+    int monthCount = Model.Count(x => x.Cargo.Date.Year == today.Year && x.Cargo.Date.Month == today.Month);
+}
+
+@if (Model.Count == 0)
+{
+    <div class="empty-state">
+        <h2>Henüz kargo yok</h2>
+        <p>Kargo eklediğinde 10 haneli takip kodu kendiliğinden oluşur.</p>
+        <a class="btn btn-primary" href="@Url.Action("CargoAdd")"><i class="fas fa-plus mr-2"></i>Kargo ekle</a>
+    </div>
+}
+else
+{
+    <div class="page-bar">
+        <div class="page-bar__lead">
+            @* Takip koduyla doğrudan kargonun sayfasına gider *@
+            <form class="list-search list-search--code" method="get" action="@Url.Action("CargoTrack")" role="search">
+                <i class="fas fa-barcode list-search__icon" aria-hidden="true"></i>
+                <input class="form-control" type="search" name="id" placeholder="Takip kodu ile bul" aria-label="Takip kodu" maxlength="10" autocomplete="off" spellcheck="false" />
+            </form>
+            <p class="page-bar__info">@Model.Count kargo</p>
+        </div>
+        <a class="btn btn-primary" href="@Url.Action("CargoAdd")"><i class="fas fa-plus mr-2"></i>Kargo ekle</a>
+    </div>
+
+    <dl class="summary">
+        <div class="summary__item">
+            <dt>Yolda</dt>
+            <dd>@onTheWayCount kargo</dd>
+        </div>
+        <div class="summary__item">
+            <dt>Teslim edilen</dt>
+            <dd>@deliveredCount kargo</dd>
+        </div>
+        <div class="summary__item">
+            <dt>Bu ay gönderilen</dt>
+            <dd>@monthCount kargo</dd>
+        </div>
+    </dl>
+
+    @* Üst çubuktaki arama bu tabloyu süzer *@
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th class="cell-fit">Takip kodu</th>
+                <th>Alıcı</th>
+                <th>Gönderen personel</th>
+                <th class="cell-fit">Gönderim</th>
+                <th>Son durum</th>
+                <th class="cell-actions">İşlemler</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                var cargo = item.Cargo;
+                var last = item.LastStatus;
+
+                <tr>
+                    <td><a class="cargo-code" href="@Url.Action("CargoTrack", new { id = cargo.TrackingCode })">@cargo.TrackingCode</a></td>
+                    <td>@cargo.Receiver</td>
+                    <td>@cargo.Personnel</td>
+                    <td class="cell-fit">@cargo.Date.ToString("dd.MM.yyyy HH:mm", tr)</td>
+                    <td>
+                        @if (last == null)
+                        {
+                            <span class="badge badge-light">Durum girilmedi</span>
+                        }
+                        else
+                        {
+                            <span class="cargo-status @(item.IsDelivered ? "is-delivered" : null)">
+                                <span class="cargo-status__text">@last.Description</span>
+                                <span class="cargo-status__date">@last.Date.ToString("d MMMM, HH:mm", tr)</span>
+                            </span>
+                        }
+                    </td>
+                    <td class="cell-actions">
+                        <a class="btn btn-light" href="@Url.Action("CargoTrack", new { id = cargo.TrackingCode })"><i class="fas fa-route mr-1"></i>Takip</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

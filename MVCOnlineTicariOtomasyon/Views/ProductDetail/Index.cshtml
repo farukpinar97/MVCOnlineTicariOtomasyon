@@ -1,0 +1,191 @@
+﻿@using MVCOnlineTicariOtomasyon.Models.Entities
+@model MVCOnlineTicariOtomasyon.Models.ViewModels.ProductDetailViewModel
+
+@{
+    ViewBag.PageTitle = "Ürün detayı";
+    ViewBag.ActiveMenu = "Product";   // yan menüde "Ürünler" seçili görünsün
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+
+    var tr = new System.Globalization.CultureInfo("tr-TR");
+
+    // Products listesinde tek ürün var
+    Product product = Model.Products.First();
+    var details = Model.Details.ToList();
+    var sales = Model.RecentSales.ToList();
+
+    var categoryName = product.Category == null ? "" : product.Category.CategoryName;
+    var meta = String.IsNullOrWhiteSpace(product.Brand) ? categoryName : product.Brand + ", " + categoryName;
+
+    // Stoku bu sayıya eşit ya da altında olan ürün "Azaldı" sayılır
+    int lowStock = 10;
+
+    // Birim kâr
+    decimal profit = product.SalePrice - product.PurchasePrice;
+    string profitText = profit.ToString("C2", tr);
+    if (product.PurchasePrice > 0)
+    {
+        profitText += " (%" + (profit / product.PurchasePrice * 100).ToString("0.#", tr) + ")";
+    }
+}
+
+<div class="page-bar">
+    <p class="page-bar__info">Ürün no @product.ProductId</p>
+    <a class="btn btn-light" href="@Url.Action("Index", "Product")"><i class="fas fa-arrow-left mr-2"></i>Ürünlere dön</a>
+</div>
+
+<div class="product-detail">
+
+    @* Görsel yoksa ya da yüklenemezse ikon görünür *@
+    <span class="thumb thumb--hero">
+        <i class="fas fa-image"></i>
+        @if (!String.IsNullOrWhiteSpace(product.ProductImage))
+        {
+            <img src="@product.ProductImage" alt="@product.ProductName" />
+        }
+    </span>
+
+    <div class="product-detail__body">
+        <div class="product-detail__meta">@meta</div>
+        <h2 class="product-detail__name">@product.ProductName</h2>
+
+        <div class="product-detail__badges">
+            @if (!product.Status)
+            {
+                <span class="badge badge-secondary">Pasif</span>
+            }
+            @if (product.Stock == 0)
+            {
+                <span class="badge badge-danger">Tükendi</span>
+            }
+            else if (product.Stock <= lowStock)
+            {
+                <span class="badge badge-warning">Stok azaldı</span>
+            }
+        </div>
+
+        <div class="product-detail__price">@product.SalePrice.ToString("C2", tr)</div>
+        <p class="product-detail__cost">Alış fiyatı @product.PurchasePrice.ToString("C2", tr), birim kâr @profitText</p>
+
+        <dl class="summary">
+            <div class="summary__item">
+                <dt>Stok</dt>
+                <dd>@product.Stock adet</dd>
+            </div>
+            <div class="summary__item">
+                <dt>Satılan toplam</dt>
+                <dd>@Model.TotalSold.ToString("N0", tr) adet</dd>
+            </div>
+            <div class="summary__item">
+                <dt>Toplam ciro</dt>
+                <dd>@Model.TotalRevenue.ToString("C2", tr)</dd>
+            </div>
+        </dl>
+
+        <div class="product-detail__actions">
+            @if (product.Status && product.Stock > 0)
+            {
+                <a class="btn btn-primary" href="@Url.Action("SalesAdd", "Sales", new { id = product.ProductId })"><i class="fas fa-cash-register mr-2"></i>Satış yap</a>
+            }
+            else
+            {
+                <button type="button" class="btn btn-primary" disabled><i class="fas fa-cash-register mr-2"></i>Satış yap</button>
+            }
+            <a class="btn btn-light" href="@Url.Action("ProductGet", "Product", new { id = product.ProductId })"><i class="fas fa-pen mr-2"></i>Güncelle</a>
+        </div>
+    </div>
+
+</div>
+
+@* Sekmeler Bootstrap'in kendi sekme yapısı *@
+<div class="tab-card">
+    <div class="nav nav-tabs" role="tablist">
+        <a class="nav-item nav-link active" id="tab-description" data-toggle="tab" href="#pane-description" role="tab" aria-controls="pane-description" aria-selected="true">Açıklama</a>
+        <a class="nav-item nav-link" id="tab-info" data-toggle="tab" href="#pane-info" role="tab" aria-controls="pane-info" aria-selected="false">Bilgiler</a>
+        <a class="nav-item nav-link" id="tab-sales" data-toggle="tab" href="#pane-sales" role="tab" aria-controls="pane-sales" aria-selected="false">Son satışlar</a>
+    </div>
+
+    <div class="tab-content">
+
+        <div class="tab-pane fade show active" id="pane-description" role="tabpanel" aria-labelledby="tab-description">
+            @if (details.Count == 0)
+            {
+                <p class="tab-card__empty">Bu ürün için açıklama girilmemiş.</p>
+            }
+            else
+            {
+                foreach (var detail in details)
+                {
+                    <p class="tab-card__text">@detail.ProductDescription</p>
+                }
+            }
+        </div>
+
+        <div class="tab-pane fade" id="pane-info" role="tabpanel" aria-labelledby="tab-info">
+            <dl class="spec">
+                <dt>Ürün no</dt>
+                <dd>@product.ProductId</dd>
+                <dt>Marka</dt>
+                <dd>@product.Brand</dd>
+                <dt>Kategori</dt>
+                <dd>@categoryName</dd>
+                <dt>Durum</dt>
+                <dd>@(product.Status ? "Aktif" : "Pasif")</dd>
+                <dt>Stok</dt>
+                <dd>@product.Stock adet</dd>
+                <dt>Alış fiyatı</dt>
+                <dd>@product.PurchasePrice.ToString("C2", tr)</dd>
+                <dt>Satış fiyatı</dt>
+                <dd>@product.SalePrice.ToString("C2", tr)</dd>
+                <dt>Birim kâr</dt>
+                <dd>@profitText</dd>
+            </dl>
+        </div>
+
+        <div class="tab-pane fade" id="pane-sales" role="tabpanel" aria-labelledby="tab-sales">
+            @if (sales.Count == 0)
+            {
+                <p class="tab-card__empty">Bu ürün henüz satılmamış.</p>
+            }
+            else
+            {
+                @* data-admin="off" *@
+                <div class="table-responsive mb-0">
+                    <table class="table table-bordered" data-admin="off">
+                        <thead>
+                            <tr>
+                                <th class="cell-fit">Tarih</th>
+                                <th>Cari</th>
+                                <th>Personel</th>
+                                <th class="cell-fit cell-num">Adet</th>
+                                <th class="cell-fit cell-num">Birim fiyat</th>
+                                <th class="cell-fit cell-num">Toplam</th>
+                                <th class="cell-actions">İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var sale in sales)
+                            {
+                                <tr>
+                                    <td class="cell-fit">@sale.SalesTransactionDate.ToString("dd.MM.yyyy", tr)</td>
+                                    <td>@sale.Current.CurrentName @sale.Current.CurrentSurname</td>
+                                    <td>@sale.Personnel.PersonnelName @sale.Personnel.PersonnelSurname</td>
+                                    <td class="cell-num">@sale.SalesTransactionQuantity</td>
+                                    <td class="cell-fit cell-num">@sale.SalesTransactionUnitPrice.ToString("C2", tr)</td>
+                                    <td class="cell-fit cell-num">@sale.SalesTransactionTotalPrice.ToString("C2", tr)</td>
+                                    <td class="cell-actions">
+                                        <a class="btn btn-light" href="@Url.Action("SalesDetail", "Sales", new { id = sale.SalesTransactionId })"><i class="fas fa-file-invoice mr-1"></i>Fiş</a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                if (Model.TotalSold > sales.Sum(x => x.SalesTransactionQuantity))
+                {
+                    <p class="tab-card__note">Son 10 satış gösteriliyor. Hepsi için <a href="@Url.Action("Index", "Sales")">Satışlar</a> sayfasına bak.</p>
+                }
+            }
+        </div>
+
+    </div>
+</div>

@@ -1,0 +1,129 @@
+﻿@{
+    ViewBag.PageTitle = "Grafikler";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+
+    int days = ViewBag.Days;
+    var periods = (int[])ViewBag.Periods;
+}
+
+@* Grafikler sayfası *@
+<div class="chart-page" id="chartPage" data-url="@Url.Action("SalesData")" data-days="@days">
+
+    <div class="chart-toolbar">
+        <div class="segmented" role="group" aria-label="Dönem">
+            @foreach (var p in periods)
+            {
+                string text = p == 365 ? "12 ay" : "Son " + p + " gün";
+                <a class="segmented__item @(p == days ? "is-active" : null)" href="@Url.Action("Index", new { days = p })" data-days="@p" aria-pressed="@(p == days ? "true" : "false")">@text</a>
+            }
+        </div>
+        <p class="chart-toolbar__period" data-bind="periodLabel" aria-live="polite"></p>
+    </div>
+
+    @* Özet kartları *@
+    <div class="kpis">
+        <div class="kpi kpi--hero">
+            <span class="kpi__label">Ciro</span>
+            <span class="kpi__value" data-kpi="revenue" data-format="money">–</span>
+            <span class="kpi__delta" data-delta="revenue"></span>
+        </div>
+        <div class="kpi">
+            <span class="kpi__label">Satış</span>
+            <span class="kpi__value" data-kpi="count" data-format="number">–</span>
+            <span class="kpi__delta" data-delta="count"></span>
+        </div>
+        <div class="kpi">
+            <span class="kpi__label">Satılan ürün adedi</span>
+            <span class="kpi__value" data-kpi="quantity" data-format="number">–</span>
+            <span class="kpi__delta" data-delta="quantity"></span>
+        </div>
+        <div class="kpi">
+            <span class="kpi__label">Ortalama satış tutarı</span>
+            <span class="kpi__value" data-kpi="average" data-format="money">–</span>
+            <span class="kpi__delta" data-delta="average"></span>
+        </div>
+    </div>
+
+    <div class="chart-grid">
+
+        @* 1. Çizgi *@
+        <section class="card chart-card chart-card--wide" data-chart="trend">
+            <header class="chart-card__head">
+                <div>
+                    <h2 class="chart-card__title" data-bind="trendTitle">Günlük ciro</h2>
+                    <p class="chart-card__sub">Seçilen dönem ve bir önceki aynı uzunluktaki dönem</p>
+                </div>
+                <ul class="chart-legend" aria-hidden="true">
+                    <li><span class="chart-legend__line"></span>Bu dönem</li>
+                    <li><span class="chart-legend__line chart-legend__line--muted"></span>Önceki dönem</li>
+                </ul>
+            </header>
+            <div class="chart-card__body">
+                <div class="chart-box chart-box--tall"><canvas role="img" aria-label="Ciro çizgi grafiği"></canvas></div>
+                <p class="chart-card__empty" hidden>Bu dönemde satış yok.</p>
+            </div>
+            <details class="chart-table"><summary>Tablo olarak göster</summary><div class="table-responsive"></div></details>
+        </section>
+
+        @* 2. Yatay çubuk *@
+        <section class="card chart-card" data-chart="products">
+            <header class="chart-card__head">
+                <div>
+                    <h2 class="chart-card__title">En çok satan ürünler</h2>
+                    <p class="chart-card__sub">Ciroya göre ilk 7</p>
+                </div>
+            </header>
+            <div class="chart-card__body">
+                <div class="chart-box"><canvas role="img" aria-label="Ürünlere göre ciro çubuk grafiği"></canvas></div>
+                <p class="chart-card__empty" hidden>Bu dönemde satış yok.</p>
+            </div>
+            <details class="chart-table"><summary>Tablo olarak göster</summary><div class="table-responsive"></div></details>
+        </section>
+
+        @* 3. Halka *@
+        <section class="card chart-card" data-chart="categories">
+            <header class="chart-card__head">
+                <div>
+                    <h2 class="chart-card__title">Kategorilere göre ciro</h2>
+                    <p class="chart-card__sub">Cironun kategorilere dağılımı</p>
+                </div>
+            </header>
+            <div class="chart-card__body chart-card__body--split">
+                <div class="chart-box chart-box--donut">
+                    <canvas role="img" aria-label="Kategorilere göre ciro halka grafiği"></canvas>
+                    <div class="donut-center" aria-hidden="true">
+                        <span class="donut-center__value" data-bind="categoryTotal"></span>
+                        <span class="donut-center__label">toplam</span>
+                    </div>
+                </div>
+                <ul class="share-list" data-bind="categoryList"></ul>
+                <p class="chart-card__empty" hidden>Bu dönemde satış yok.</p>
+            </div>
+            <details class="chart-table"><summary>Tablo olarak göster</summary><div class="table-responsive"></div></details>
+        </section>
+
+        @* 4. Sütun *@
+        <section class="card chart-card chart-card--wide" data-chart="personnel">
+            <header class="chart-card__head">
+                <div>
+                    <h2 class="chart-card__title">Personel performansı</h2>
+                    <p class="chart-card__sub">Personellerin bu dönemdeki cirosu</p>
+                </div>
+            </header>
+            <div class="chart-card__body">
+                <div class="chart-box"><canvas role="img" aria-label="Personellere göre ciro sütun grafiği"></canvas></div>
+                <p class="chart-card__empty" hidden>Bu dönemde satış yok.</p>
+            </div>
+            <details class="chart-table"><summary>Tablo olarak göster</summary><div class="table-responsive"></div></details>
+        </section>
+
+    </div>
+
+    <p class="chart-error alert alert-danger" role="alert" hidden>Grafik verileri alınamadı. Sayfayı yenileyip tekrar dene.</p>
+</div>
+
+@section scripts {
+    @* Chart.js 4, sonra sayfanın betiği *@
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
+    <script src="@Url.Content("~/Content/admin/charts.js")"></script>
+}

@@ -1,0 +1,36 @@
+﻿@using MVCOnlineTicariOtomasyon.Models.Entities
+@model InvoiceItem
+
+@{
+    // Bu sayfa, fatura sayfasındaki "Kalem ekle" penceresinin yedeği
+    ViewBag.PageTitle = "Yeni kalem";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+
+    // Kalemin ekleneceği fatura
+    var invoice = (Invoice)ViewBag.Invoice;
+}
+
+<div class="page-bar">
+    <p class="page-bar__info">Fatura no @invoice.InvoiceSerialNo @invoice.InvoiceOrderNo</p>
+</div>
+
+@using (Html.BeginForm("InvoiceItemAdd", "Invoice", FormMethod.Post, new { @class = "card form-card form-card--wide" }))
+{
+    @Html.AntiForgeryToken()
+    @* Fatura numarası elle yazılmaz *@
+    <input type="hidden" name="InvoiceId" value="@invoice.InvoiceId" />
+
+    <div class="card-body">
+        @Html.Partial("_InvoiceItemFields", Model)
+    </div>
+
+    <div class="card-footer">
+        <button type="submit" class="btn btn-primary">Kalemi ekle</button>
+        <a class="btn btn-light" href="@Url.Action("InvoiceDetail", new { id = invoice.InvoiceId })">Vazgeç</a>
+    </div>
+}
+
+@section scripts {
+    @* Miktar ve birim fiyat yazıldıkça tutarı gösterir *@
+    <script src="@Url.Content("~/Content/admin/invoice-item.js")"></script>
+}

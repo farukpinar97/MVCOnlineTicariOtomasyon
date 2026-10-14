@@ -1,0 +1,38 @@
+﻿@* "Cari girişi" penceresinin içi *@
+@{
+    string error = ViewBag.Error;
+}
+
+@using (Html.BeginForm("CurrentLogin", "Login", FormMethod.Post))
+{
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="returnUrl" value="@ViewBag.ReturnUrl" />
+
+    <div class="modal-header">
+        <h2 class="modal-title" id="currentLoginTitle">Cari girişi</h2>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Kapat"><span aria-hidden="true">&times;</span></button>
+    </div>
+
+    <div class="modal-body">
+        <p class="modal-form__error alert alert-danger" role="alert" hidden>Gönderilemedi. Bağlantını kontrol edip tekrar dene.</p>
+
+        @if (error != null)
+        {
+            <div class="alert alert-danger" role="alert">@error</div>
+        }
+
+        <div class="form-group">
+            <label for="loginMail">E-posta</label>
+            <input class="form-control @(error != null ? "input-validation-error" : null)" id="loginMail" name="mail" type="text" inputmode="email" value="@ViewBag.Mail" maxlength="50" required autocomplete="username" />
+        </div>
+        <div class="form-group mb-0">
+            <label for="loginPassword">Şifre</label>
+            <input class="form-control" id="loginPassword" name="password" type="password" maxlength="20" required autocomplete="current-password" />
+        </div>
+    </div>
+
+    <div class="modal-footer">
+        <button type="button" class="btn btn-light" data-dismiss="modal">Vazgeç</button>
+        <button type="submit" class="btn btn-primary">Giriş yap</button>
+    </div>
+}

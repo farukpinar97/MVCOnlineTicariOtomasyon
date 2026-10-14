@@ -1,0 +1,57 @@
+﻿@model MVCOnlineTicariOtomasyon.Models.ViewModels.CountTableViewModel
+
+@* "Neye göre kaç tane" tablosu *@
+@{
+    var tr = new System.Globalization.CultureInfo("tr-TR");
+    // CSS'teki yüzdeler nokta ile yazılmalı
+    var css = System.Globalization.CultureInfo.InvariantCulture;
+}
+
+<section class="card quick-card">
+    <div class="card-header quick-card__head">
+        <h2 class="quick-card__title">@Model.Title</h2>
+        <a href="@Model.LinkUrl">@Model.LinkText</a>
+    </div>
+
+    @if (Model.Total == 0)
+    {
+        <p class="quick-card__empty">Gösterilecek kayıt yok.</p>
+    }
+    else
+    {
+        @* data-search="off" *@
+        <table class="table" data-search="off">
+            <thead>
+                <tr>
+                    <th>@Model.NameHeader</th>
+                    <th class="cell-fit cell-num">@Model.CountHeader</th>
+                    <th class="cell-meter">Pay</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in Model.Rows)
+                {
+                    decimal share = (decimal)row.Count / Model.Total * 100;
+
+                    <tr class="@(row.IsOther ? "is-other" : null)">
+                        <td>@row.Name</td>
+                        <td class="cell-num">@row.Count</td>
+                        <td class="cell-meter">
+                            <span class="meter-row">
+                                <span class="meter"><span style="width:@share.ToString("0.##", css)%"></span></span>
+                                <span class="meter-row__value">@("%" + share.ToString("0", tr))</span>
+                            </span>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr>
+                    <th>Toplam</th>
+                    <td class="cell-num">@Model.Total</td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+    }
+</section>

@@ -1,0 +1,21 @@
+﻿@model MVCOnlineTicariOtomasyon.Models.Entities.Current
+
+@{
+    ViewBag.PageTitle = "Cariyi güncelle";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+@using (Html.BeginForm("CurrentUpdate", "Current", FormMethod.Post, new { @class = "card form-card form-card--wide" }))
+{
+    @Html.AntiForgeryToken()
+    @Html.HiddenFor(x => x.CurrentId)
+
+    <div class="card-body">
+        @Html.Partial("_CurrentForm")
+    </div>
+
+    <div class="card-footer">
+        <button type="submit" class="btn btn-primary">Güncelle</button>
+        <a class="btn btn-light" href="@Url.Action("Index")">Vazgeç</a>
+    </div>
+}

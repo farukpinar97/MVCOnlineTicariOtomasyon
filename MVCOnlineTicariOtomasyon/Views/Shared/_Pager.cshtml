@@ -1,0 +1,84 @@
+﻿@using PagedList
+@model IPagedList
+
+@* Liste sayfalarının altındaki sayfalama *@
+@{
+    Func<int, string> pageUrl = n =>
+    {
+        var parts = new List<string>();
+        foreach (string key in Request.QueryString.AllKeys)
+        {
+            if (key != null && !key.Equals("page", StringComparison.OrdinalIgnoreCase))
+            {
+                parts.Add(Url.Encode(key) + "=" + Url.Encode(Request.QueryString[key]));
+            }
+        }
+        if (n > 1)
+        {
+            parts.Add("page=" + n);
+        }
+        return Request.Path + (parts.Count > 0 ? "?" + String.Join("&", parts) : "");
+    };
+
+    // Görünen numaralar
+    var pages = new SortedSet<int>();
+    if (Model.PageCount > 0)
+    {
+        pages.Add(1);
+        pages.Add(Model.PageCount);
+    }
+    for (int i = Model.PageNumber - 1; i <= Model.PageNumber + 1; i++)
+    {
+        if (i >= 1 && i <= Model.PageCount)
+        {
+            pages.Add(i);
+        }
+    }
+    int previous = 0;
+}
+
+@if (Model.PageCount > 1)
+{
+    <nav class="pager" aria-label="Sayfalar">
+        <p class="pager__info">@Model.FirstItemOnPage–@Model.LastItemOnPage arası, toplam @Model.TotalItemCount kayıt</p>
+
+        <ul class="pagination">
+            @if (Model.HasPreviousPage)
+            {
+                <li class="page-item"><a class="page-link" href="@pageUrl(Model.PageNumber - 1)" rel="prev" aria-label="Önceki sayfa"><i class="fas fa-chevron-left" aria-hidden="true"></i></a></li>
+            }
+            else
+            {
+                <li class="page-item disabled"><span class="page-link" aria-hidden="true"><i class="fas fa-chevron-left"></i></span></li>
+            }
+
+            @foreach (var n in pages)
+            {
+                if (n - previous > 1)
+                {
+                    <li class="page-item disabled"><span class="page-link">…</span></li>
+                }
+
+                if (n == Model.PageNumber)
+                {
+                    <li class="page-item active"><span class="page-link" aria-current="page">@n</span></li>
+                }
+                else
+                {
+                    <li class="page-item"><a class="page-link" href="@pageUrl(n)" aria-label="@n. sayfa">@n</a></li>
+                }
+
+                previous = n;
+            }
+
+            @if (Model.HasNextPage)
+            {
+                <li class="page-item"><a class="page-link" href="@pageUrl(Model.PageNumber + 1)" rel="next" aria-label="Sonraki sayfa"><i class="fas fa-chevron-right" aria-hidden="true"></i></a></li>
+            }
+            else
+            {
+                <li class="page-item disabled"><span class="page-link" aria-hidden="true"><i class="fas fa-chevron-right"></i></span></li>
+            }
+        </ul>
+    </nav>
+}

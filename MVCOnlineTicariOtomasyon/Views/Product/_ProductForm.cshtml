@@ -1,0 +1,83 @@
+﻿@model MVCOnlineTicariOtomasyon.Models.Entities.Product
+
+@* Ürün formunun alanları *@
+@{
+    var categories = (List<SelectListItem>)ViewBag.Categories;
+
+    // Fiyat örneğindeki ondalık ayracı sunucunun bölge ayarından gelir
+    string priceExample = (1250.5m).ToString("0.00");
+}
+
+<div class="form-row">
+    <div class="form-group col-md-6">
+        @Html.LabelFor(x => x.ProductName)
+        @Html.TextBoxFor(x => x.ProductName, new { @class = "form-control", maxlength = 30, required = "required", autofocus = "autofocus", autocomplete = "off" })
+        @Html.ValidationMessageFor(x => x.ProductName)
+    </div>
+    <div class="form-group col-md-6">
+        @Html.LabelFor(x => x.Brand)
+        @Html.TextBoxFor(x => x.Brand, new { @class = "form-control", maxlength = 30, autocomplete = "off" })
+        @Html.ValidationMessageFor(x => x.Brand)
+    </div>
+</div>
+
+<div class="form-row">
+    <div class="form-group col-md-6">
+        @Html.LabelFor(x => x.CategoryId)
+        @Html.DropDownListFor(x => x.CategoryId, categories, "Kategori seç", new { @class = "form-control", required = "required" })
+        @Html.ValidationMessageFor(x => x.CategoryId)
+        @if (categories.Count == 0)
+        {
+            <small class="form-text text-muted">Henüz kategori yok. <a href="@Url.Action("CategoryAdd", "Category")">Önce bir kategori ekle</a>.</small>
+        }
+    </div>
+    <div class="form-group col-md-6">
+        @Html.LabelFor(x => x.Stock)
+        @Html.TextBoxFor(x => x.Stock, new { @class = "form-control", type = "number", min = 0, max = 32767, step = 1, required = "required" })
+        @Html.ValidationMessageFor(x => x.Stock)
+    </div>
+</div>
+
+<div class="form-row">
+    <div class="form-group col-md-6">
+        @Html.LabelFor(x => x.PurchasePrice)
+        <div class="input-group">
+            @Html.TextBoxFor(x => x.PurchasePrice, new { @class = "form-control", inputmode = "decimal", required = "required", autocomplete = "off" })
+            <div class="input-group-append"><span class="input-group-text">₺</span></div>
+        </div>
+        @Html.ValidationMessageFor(x => x.PurchasePrice)
+        <small class="form-text text-muted">Örnek: @priceExample</small>
+    </div>
+    <div class="form-group col-md-6">
+        @Html.LabelFor(x => x.SalePrice)
+        <div class="input-group">
+            @Html.TextBoxFor(x => x.SalePrice, new { @class = "form-control", inputmode = "decimal", required = "required", autocomplete = "off" })
+            <div class="input-group-append"><span class="input-group-text">₺</span></div>
+        </div>
+        @Html.ValidationMessageFor(x => x.SalePrice)
+        <small class="form-text text-muted">Örnek: @priceExample</small>
+    </div>
+</div>
+
+<div class="form-group">
+    @Html.LabelFor(x => x.ProductImage)
+    <div class="image-field">
+        @* Adres yazıldıkça admin.js görseli bu kutuda gösterir *@
+        <span class="thumb thumb--lg" id="imagePreview"><i class="fas fa-image"></i></span>
+        @Html.TextBoxFor(x => x.ProductImage, new { @class = "form-control", maxlength = 250, placeholder = "https://", autocomplete = "off", data_preview = "#imagePreview" })
+    </div>
+    @Html.ValidationMessageFor(x => x.ProductImage)
+    <small class="form-text text-muted">İsteğe bağlı. Görselin internet adresini yapıştır.</small>
+</div>
+
+@* Durum sadece güncellemede görünür *@
+@if (Model != null && Model.ProductId != 0)
+{
+    <div class="form-group mb-0">
+        <div class="custom-control custom-switch">
+            @Html.CheckBoxFor(x => x.Status, new { @class = "custom-control-input" })
+            @Html.LabelFor(x => x.Status, new { @class = "custom-control-label" })
+        </div>
+        <small class="form-text text-muted">Kapalıyken ürün Ürünler listesinde görünmez, Tüm ürünler sayfasında durmaya devam eder.</small>
+    </div>
+}

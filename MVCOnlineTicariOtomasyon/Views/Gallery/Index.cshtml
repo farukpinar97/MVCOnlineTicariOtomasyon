@@ -1,0 +1,75 @@
+﻿@using MVCOnlineTicariOtomasyon.Models.Entities
+@model List<Product>
+
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+
+    int withoutImage = ViewBag.WithoutImage;
+
+    var info = Model.Count + " görsel";
+    if (withoutImage > 0)
+    {
+        info += ", " + withoutImage + " ürünün görseli yok";
+    }
+}
+
+@if (Model.Count == 0)
+{
+    <div class="empty-state">
+        <h2>Galeride görsel yok</h2>
+        <p>Görseller ürünlerden gelir. Bir ürünü güncelleyip görsel adresini yapıştırdığında burada görünür.</p>
+        <a class="btn btn-primary" href="@Url.Action("Index", "Product")">Ürünlere git</a>
+    </div>
+}
+else
+{
+    <div class="page-bar">
+        <p class="page-bar__info">@info</p>
+        <a class="btn btn-light" href="@Url.Action("Index", "Product")"><i class="fas fa-box-open mr-2"></i>Ürünlere git</a>
+    </div>
+
+    @* Her karo bir düğme *@
+    <div class="gallery">
+        @foreach (var item in Model)
+        {
+            var categoryName = item.Category == null ? "" : item.Category.CategoryName;
+            var meta = String.IsNullOrWhiteSpace(item.Brand) ? categoryName : item.Brand + ", " + categoryName;
+
+            <button type="button" class="gallery__item"
+                    data-search-item="@item.ProductName @item.Brand @categoryName"
+                    data-full="@item.ProductImage"
+                    data-title="@item.ProductName"
+                    data-meta="@meta">
+                <span class="gallery__frame"><img src="@item.ProductImage" alt="" loading="lazy" /></span>
+                <span class="gallery__name">@item.ProductName</span>
+                <span class="gallery__meta">@meta</span>
+            </button>
+        }
+    </div>
+
+    @* Büyük görsel penceresi *@
+    <div class="modal fade lightbox" id="lightbox" tabindex="-1" role="dialog" aria-label="Ürün görseli" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <button type="button" class="lightbox__btn lightbox__close" data-dismiss="modal" aria-label="Kapat"><i class="fas fa-times"></i></button>
+                <button type="button" class="lightbox__btn lightbox__prev" aria-label="Önceki görsel"><i class="fas fa-chevron-left"></i></button>
+                <button type="button" class="lightbox__btn lightbox__next" aria-label="Sonraki görsel"><i class="fas fa-chevron-right"></i></button>
+
+                <figure class="lightbox__figure">
+                    <img class="lightbox__image" alt="" />
+                    <figcaption class="lightbox__caption">
+                        <div>
+                            <div class="lightbox__title"></div>
+                            <div class="lightbox__meta"></div>
+                        </div>
+                        <div class="lightbox__count" aria-live="polite"></div>
+                    </figcaption>
+                </figure>
+            </div>
+        </div>
+    </div>
+}
+
+@section scripts {
+    <script src="~/Content/admin/gallery.js"></script>
+}

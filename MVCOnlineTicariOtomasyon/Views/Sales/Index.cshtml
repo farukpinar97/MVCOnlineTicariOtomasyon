@@ -1,0 +1,151 @@
+﻿@using MVCOnlineTicariOtomasyon.Models.Entities
+@model List<SalesTransaction>
+
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+
+    var tr = new System.Globalization.CultureInfo("tr-TR");
+    var today = DateTime.Today;
+
+    // Özet bandındaki toplamlar
+    decimal totalRevenue = Model.Sum(x => x.SalesTransactionTotalPrice);
+    decimal monthRevenue = Model
+        .Where(x => x.SalesTransactionDate.Year == today.Year && x.SalesTransactionDate.Month == today.Month)
+        .Sum(x => x.SalesTransactionTotalPrice);
+    int totalQuantity = Model.Sum(x => x.SalesTransactionQuantity);
+    int todayCount = Model.Count(x => x.SalesTransactionDate.Date == today);
+}
+
+@* jQuery ve Bootstrap layout'tan geliyor *@
+@section head {
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap4.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/1.5.2/css/buttons.bootstrap4.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.2.3/css/responsive.bootstrap4.min.css" />
+}
+
+@if (Model.Count == 0)
+{
+    <div class="empty-state">
+        <h2>Henüz satış yok</h2>
+        <p>İlk satışı kaydettiğinde burada listelenir ve ürünün stoku düşer.</p>
+        <a class="btn btn-primary" href="@Url.Action("SalesAdd")"><i class="fas fa-plus mr-2"></i>Satış yap</a>
+    </div>
+}
+else
+{
+    <div class="page-bar">
+        <p class="page-bar__info">@Model.Count satış</p>
+        <a class="btn btn-primary" href="@Url.Action("SalesAdd")"><i class="fas fa-plus mr-2"></i>Satış yap</a>
+    </div>
+
+    <dl class="summary">
+        <div class="summary__item">
+            <dt>Toplam ciro</dt>
+            <dd>@totalRevenue.ToString("C2", tr)</dd>
+        </div>
+        <div class="summary__item">
+            <dt>Bu ayın cirosu</dt>
+            <dd>@monthRevenue.ToString("C2", tr)</dd>
+        </div>
+        <div class="summary__item">
+            <dt>Satılan toplam adet</dt>
+            <dd>@totalQuantity.ToString("N0", tr)</dd>
+        </div>
+        <div class="summary__item">
+            <dt>Bugün</dt>
+            <dd>@todayCount satış</dd>
+        </div>
+    </dl>
+
+    @* data-admin="off" *@
+    <table id="salesTable" class="table table-bordered dt-responsive nowrap" style="width:100%" data-admin="off">
+        <thead>
+            <tr>
+                <th>Satış no</th>
+                <th>Tarih</th>
+                <th>Ürün</th>
+                <th>Cari</th>
+                <th>Personel</th>
+                <th class="cell-num">Adet</th>
+                <th class="cell-num">Birim fiyat</th>
+                <th class="cell-num">Toplam</th>
+                <th class="cell-actions no-export">İşlemler</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.SalesTransactionId</td>
+                    @* data-order *@
+                    <td data-order="@item.SalesTransactionDate.ToString("yyyyMMdd")">@item.SalesTransactionDate.ToString("dd.MM.yyyy", tr)</td>
+                    <td>@item.Product.ProductName</td>
+                    <td>@item.Current.CurrentName @item.Current.CurrentSurname</td>
+                    <td>@item.Personnel.PersonnelName @item.Personnel.PersonnelSurname</td>
+                    <td class="cell-num">@item.SalesTransactionQuantity</td>
+                    <td class="cell-num" data-order="@item.SalesTransactionUnitPrice.ToString(System.Globalization.CultureInfo.InvariantCulture)">@item.SalesTransactionUnitPrice.ToString("N2", tr)</td>
+                    <td class="cell-num" data-order="@item.SalesTransactionTotalPrice.ToString(System.Globalization.CultureInfo.InvariantCulture)">@item.SalesTransactionTotalPrice.ToString("N2", tr)</td>
+                    <td class="cell-actions">
+                        <a class="btn btn-light" href="@Url.Action("SalesDetail", new { id = item.SalesTransactionId })"><i class="fas fa-file-invoice mr-1"></i>Fiş</a>
+                        <a class="btn btn-light" href="@Url.Action("SalesGet", new { id = item.SalesTransactionId })"><i class="fas fa-pen mr-1"></i>Güncelle</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@section scripts {
+    <script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.19/js/dataTables.bootstrap4.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/1.5.2/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/1.5.2/js/buttons.bootstrap4.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/vfs_fonts.js"></script>
+    <script src="https://cdn.datatables.net/buttons/1.5.2/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/1.5.2/js/buttons.print.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/1.5.2/js/buttons.colVis.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.2.3/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.2.3/js/responsive.bootstrap4.min.js"></script>
+    <script>
+        $(function () {
+            if (!$('#salesTable').length) { return; }   // hiç satış yokken tablo da yok
+
+            // Dışa aktarma butonları temanın açık renkli buton stilini kullansın
+            $.fn.dataTable.Buttons.defaults.dom.button.className = 'btn btn-light';
+
+            // "İşlemler" sütunu dosyaya yazılmaz
+            var dataColumns = { columns: ':not(.no-export)' };
+
+            var table = $('#salesTable').DataTable({
+                lengthChange: false,
+                pageLength: 25,
+                order: [[1, 'desc'], [0, 'desc']],   // tarihe, sonra satış numarasına göre yeniden eskiye
+                columnDefs: [{ targets: 'no-export', orderable: false, searchable: false }],
+                buttons: [
+                    { extend: 'copy', text: 'Kopyala', exportOptions: dataColumns },
+                    { extend: 'excel', text: 'Excel', exportOptions: dataColumns },
+                    { extend: 'csv', text: 'CSV', exportOptions: dataColumns },
+                    { extend: 'pdf', text: 'PDF', exportOptions: dataColumns },
+                    { extend: 'colvis', text: 'Sütunlar', columns: ':not(.no-export)' }
+                ],
+                language: {
+                    search: 'Ara:',
+                    zeroRecords: 'Aramayla eşleşen satış yok.',
+                    emptyTable: 'Henüz satış yok.',
+                    info: '_TOTAL_ satıştan _START_ - _END_ arası',
+                    infoEmpty: 'Gösterilecek satış yok',
+                    infoFiltered: '(toplam _MAX_ satış içinden)',
+                    paginate: { previous: 'Önceki', next: 'Sonraki' },
+                    buttons: {
+                        copyTitle: 'Panoya kopyalandı',
+                        copySuccess: { _: '%d satır kopyalandı', 1: '1 satır kopyalandı' }
+                    }
+                }
+            });
+
+            table.buttons().container().appendTo('#salesTable_wrapper .col-md-6:eq(0)');
+        });
+    </script>
+}
